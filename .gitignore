@@ -1,0 +1,158 @@
+## Build artifacts
+bin/
+obj/
+out/
+[Bb]uild/
+[Ll]og/
+[Tt]est[Rr]esults/
+*.exe
+*.dll
+*.app
+*.so
+*.dylib
+*.pdb
+*.cache
+*.db
+*.log
+*.bak
+*.tmp
+*.swp
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.orig
+
+## VS Code
+.vscode/
+.history/
+*.code-workspace
+
+## JetBrains Rider / ReSharper
+.idea/
+*.DotSettings.user
+_ReSharper*/
+*_ReSharper*/
+*.sln.iml
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## Dotnet tools / NuGet
+*.nuget/
+.nuget/
+*.nupkg
+*.snupkg
+*.nuspec
+project.lock.json
+project.fragment.lock.json
+artifacts/
+packages/
+PackageRestoreConsent*.xml
+*.deps.json
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+
+## Test coverage
+*.coverage
+*.coveragexml
+*.coverageinfo
+coverage/
+TestResult.xml
+*.trx
+.coverage
+*.lcov
+*.opencover.xml
+*.cobertura.xml
+
+## Publish outputs
+publish/
+wwwroot/dist/
+dist/
+node_modules/
+bower_components/
+
+## Local config secrets (don’t commit these)
+appsettings.Local.json
+appsettings.Development.Local.json
+secrets.json
+
+## AWS / CDK / Cloud tooling
+cdk.out/
+.aws-sam/
+.aws/
+*.template.json
+*.stack.yaml
+*.tfstate
+*.tfstate.backup
+
+## Docker
+docker-compose.override.yml
+*.env
+.env.*
+.envrc
+.Dockerfile.swp
+**/Dockerfile-local
+**/Dockerfile.dev
+
+## Logs & temp
+*.log
+*.pid
+*.seed
+*.pid.lock
+*.psess
+*.vsp
+*.vspscc
+*.vsmdi
+*.psess
+*.vspx
+*.tmp_proj
+*.tlog
+
+## IDE specific
+.vs/
+.vscode/
+.idea/
+*.sln.docstates
+*.ncrunchsolution
+*.ncrunchproject
+
+## Miscellaneous
+*.orig
+*.rej
+*.bak
+*.old
+*.patch
+*.diff
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## Rider & DotCover
+.idea/
+*.DotSettings.user
+*.dotCover
+
+## Local storage or generated directories
+var/storage/
+uploads/
+tmp/
+temp/
+
