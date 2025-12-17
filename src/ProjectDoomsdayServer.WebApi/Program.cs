@@ -1,16 +1,28 @@
 using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Infrastructure.Files;
+using ProjectDoomsdayServer.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Amazon.S3;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-builder.Services.AddScoped<FileService>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddSingleton<IFileRepository, InMemoryFileRepository>();
+
+#region AWS 
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonS3>();
+#endregion AWS
+
+// Register infrastructure services (including S3FileStorage, etc.)
+builder.Services.AddInfrastructureServices();
+
+// To use S3FileStorage instead of LocalFileStorage, swap the following:
+// builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -31,6 +43,9 @@ builder.Services.AddSwaggerGen(c =>
         { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() }
     });
 });
+
+
+
 
 var authEnabled = builder.Configuration.GetValue<bool>("Authentication:Enabled");
 if (authEnabled)
