@@ -4,18 +4,21 @@ using ProjectDoomsdayServer.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using Amazon.S3;
+using ProjectDoomsdayServer.Domain.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 builder.Services.AddSingleton<IFileRepository, InMemoryFileRepository>();
+builder.Services.AddScoped<FileService>();
 
 #region AWS 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonS3>();
+builder.Services.Configure<S3Config>(builder.Configuration.GetSection("S3"));
 #endregion AWS
 
 // Register infrastructure services (including S3FileStorage, etc.)

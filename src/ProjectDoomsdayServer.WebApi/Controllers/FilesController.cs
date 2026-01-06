@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ProjectDoomsdayServer.WebApi.Controllers;
 
 [ApiController]
-[Route("api/files")]
+[Route("files")]
 public sealed class FilesController : ControllerBase
 {
     private readonly FileService _filesService;
@@ -51,4 +51,8 @@ public sealed class FilesController : ControllerBase
         await _filesService.DeleteAsync(id, ct);
         return NoContent();
     }
+
+    [HttpGet("presigned-upload-url")]
+    public async Task<ActionResult<string>> GetPresignedUploadUrl(string fileName, CancellationToken ct)
+        => Ok(await _filesService.GetPresignedUploadUrlAsync(fileName, ct));
 }

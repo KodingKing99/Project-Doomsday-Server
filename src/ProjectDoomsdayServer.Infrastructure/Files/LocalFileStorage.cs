@@ -30,4 +30,9 @@ public sealed class LocalFileStorage : IFileStorage
         return Task.CompletedTask;
     }
     public Task<bool> ExistsAsync(Guid id, CancellationToken ct) => Task.FromResult(File.Exists(PathFor(id)));
+
+    public Task<string> GetPresignedUploadUrlAsync(string fileName, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

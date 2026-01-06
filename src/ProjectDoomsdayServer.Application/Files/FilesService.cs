@@ -38,4 +38,6 @@ public sealed class FileService
         await _repo.UpsertAsync(rec, cancellationToken);
     }
     public Task<Stream> DownloadAsync(Guid id, CancellationToken cancellationToken) => _storage.OpenReadAsync(id, cancellationToken);
+    public Task<string> GetPresignedUploadUrlAsync(string fileName, CancellationToken cancellationToken)
+        => _storage.GetPresignedUploadUrlAsync(fileName, cancellationToken);
 }
