@@ -1,4 +1,5 @@
 using Amazon.S3;
+using Amazon.S3.Model;
 using System.Threading.Tasks;
 using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.Configuration;
@@ -26,12 +27,35 @@ public class S3FileStorage : IFileStorage
         throw new NotImplementedException();
     }
 
-    // Example stub method
+    // Generate a presigned PUT URL that a client can use to upload directly to S3.
+    // The generated S3 key is prefixed with a GUID to avoid collisions. If you
+    // want the server to track the generated key, consider returning the key
+    // alongside the URL or accepting an explicit key from the caller.
     public Task<string> GetPresignedUploadUrlAsync(string fileName, CancellationToken cancellationToken)
     {
+        // Respect cancellation early
+        cancellationToken.ThrowIfCancellationRequested();
+
         var bucketName = _config.BucketName;
-        // TODO: Implement presigned URL logic
-        throw new NotImplementedException();
+
+        // Use a GUID prefix to avoid name collisions and make the key unique.
+        var key = $"{Guid.NewGuid():N}_{fileName}";
+
+        // Default expiry for the presigned URL. Make configurable via S3Config if desired.
+        var expiry = TimeSpan.FromMinutes(15);
+
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = bucketName,
+            Key = key,
+            Verb = HttpVerb.PUT,
+            Expires = DateTime.UtcNow.Add(expiry)
+            // Optionally set ContentType or other headers to restrict uploads.
+        };
+
+        var url = _s3Client.GetPreSignedURL(request);
+
+        return Task.FromResult(url);
     }
 
     public Task<Stream> OpenReadAsync(Guid id, CancellationToken ct)
