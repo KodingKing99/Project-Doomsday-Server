@@ -13,9 +13,19 @@ public sealed class FileService
         _storage = storage;
     }
 
-    public async Task<FileRecord> UploadAsync(string fileName, string contentType, Stream content, CancellationToken cancellationToken)
+    public async Task<FileRecord> UploadAsync(
+        string fileName,
+        string contentType,
+        Stream content,
+        CancellationToken cancellationToken
+    )
     {
-        var record = new FileRecord { FileName = fileName, ContentType = contentType, UpdatedAtUtc = DateTimeOffset.UtcNow };
+        var record = new FileRecord
+        {
+            FileName = fileName,
+            ContentType = contentType,
+            UpdatedAtUtc = DateTimeOffset.UtcNow,
+        };
 
         using var ms = new MemoryStream();
         await content.CopyToAsync(ms, cancellationToken);
@@ -27,17 +37,41 @@ public sealed class FileService
         return record;
     }
 
-    public Task<FileRecord?> GetAsync(Guid id, CancellationToken cancellationToken) => _repo.GetAsync(id, cancellationToken);
-    public Task<IReadOnlyList<FileRecord>> ListAsync(int skip, int take, CancellationToken cancellationToken) => _repo.ListAsync(skip, take, cancellationToken);
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken) { await _storage.DeleteAsync(id, cancellationToken); await _repo.DeleteAsync(id, cancellationToken); }
-    public async Task UpdateMetadataAsync(Guid id, Dictionary<string,string> metadata, CancellationToken cancellationToken)
+    public Task<FileRecord?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+        _repo.GetAsync(id, cancellationToken);
+
+    public Task<IReadOnlyList<FileRecord>> ListAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken
+    ) => _repo.ListAsync(skip, take, cancellationToken);
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var rec = await _repo.GetAsync(id, cancellationToken) ?? throw new KeyNotFoundException("File not found");
-        foreach (var kv in metadata) rec.Metadata[kv.Key] = kv.Value;
+        await _storage.DeleteAsync(id, cancellationToken);
+        await _repo.DeleteAsync(id, cancellationToken);
+    }
+
+    public async Task UpdateMetadataAsync(
+        Guid id,
+        Dictionary<string, string> metadata,
+        CancellationToken cancellationToken
+    )
+    {
+        var rec =
+            await _repo.GetAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException("File not found");
+        foreach (var kv in metadata)
+            rec.Metadata[kv.Key] = kv.Value;
         rec.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await _repo.UpsertAsync(rec, cancellationToken);
     }
-    public Task<Stream> DownloadAsync(Guid id, CancellationToken cancellationToken) => _storage.OpenReadAsync(id, cancellationToken);
-    public Task<string> GetPresignedUploadUrlAsync(string fileName, CancellationToken cancellationToken)
-        => _storage.GetPresignedUploadUrlAsync(fileName, cancellationToken);
+
+    public Task<Stream> DownloadAsync(Guid id, CancellationToken cancellationToken) =>
+        _storage.OpenReadAsync(id, cancellationToken);
+
+    public Task<string> GetPresignedUploadUrlAsync(
+        string fileName,
+        CancellationToken cancellationToken
+    ) => _storage.GetPresignedUploadUrlAsync(fileName, cancellationToken);
 }

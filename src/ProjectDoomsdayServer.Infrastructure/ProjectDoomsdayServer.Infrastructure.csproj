@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <ItemGroup>
     <ProjectReference Include="..\ProjectDoomsdayServer.Application\ProjectDoomsdayServer.Application.csproj" />
     <ProjectReference Include="..\ProjectDoomsdayServer.Domain\ProjectDoomsdayServer.Domain.csproj" />
@@ -17,5 +16,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
 </Project>

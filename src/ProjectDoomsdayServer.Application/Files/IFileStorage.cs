@@ -1,4 +1,5 @@
 namespace ProjectDoomsdayServer.Application.Files;
+
 public interface IFileStorage
 {
     Task SaveAsync(Guid id, Stream content, CancellationToken ct);

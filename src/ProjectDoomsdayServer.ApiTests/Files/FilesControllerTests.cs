@@ -27,18 +27,22 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
         var fileName = "test.txt";
 
         // Act
-        var response = await _client.GetAsync($"/files/presigned-upload-url?fileName={System.Uri.EscapeDataString(fileName)}");
+        var response = await _client.GetAsync(
+            $"/files/presigned-upload-url?fileName={System.Uri.EscapeDataString(fileName)}"
+        );
 
         // Assert
         response.EnsureSuccessStatusCode();
-    var body = await response.Content.ReadAsStringAsync();
-    body.Should().NotBeNullOrWhiteSpace();
-    body.Should().StartWith("https://");
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotBeNullOrWhiteSpace();
+        body.Should().StartWith("https://");
 
-    // Verify the substitute was called
-    var sub = _factory.FileStorageSubstitute as IFileStorage;
-    Assert.NotNull(sub);
-    // NSubstitute verification: ensure the method was called at least once with the filename
-    ((IFileStorage)sub!).Received(1).GetPresignedUploadUrlAsync(fileName, Arg.Any<System.Threading.CancellationToken>());
+        // Verify the substitute was called
+        var sub = _factory.FileStorageSubstitute as IFileStorage;
+        Assert.NotNull(sub);
+        // NSubstitute verification: ensure the method was called at least once with the filename
+        ((IFileStorage)sub!)
+            .Received(1)
+            .GetPresignedUploadUrlAsync(fileName, Arg.Any<System.Threading.CancellationToken>());
     }
 }
