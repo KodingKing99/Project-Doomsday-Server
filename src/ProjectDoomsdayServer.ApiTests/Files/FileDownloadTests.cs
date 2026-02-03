@@ -1,0 +1,93 @@
+using System.Net;
+using System.Net.Http.Json;
+using FluentAssertions;
+using ProjectDoomsdayServer.ApiTests.TestSupport;
+using ProjectDoomsdayServer.Domain.Files;
+
+namespace ProjectDoomsdayServer.ApiTests.Files;
+
+public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
+{
+    private readonly CustomWebApplicationFactory _factory;
+    private readonly HttpClient _client;
+
+    public FileDownloadTests(CustomWebApplicationFactory factory)
+    {
+        _factory = factory;
+        _factory.Reset();
+        _client = factory.CreateClient();
+    }
+
+    private async Task<(FileRecord Record, byte[] Content)> UploadTestFile(
+        string fileName = "test.txt",
+        string contentType = "text/plain",
+        byte[]? content = null
+    )
+    {
+        content ??= TestHelpers.CreateTextContent("Test content for download");
+        using var form = TestHelpers.CreateFileUpload(fileName, content, contentType);
+        var response = await _client.PostAsync("/files", form);
+        response.EnsureSuccessStatusCode();
+        var record = (await response.Content.ReadFromJsonAsync<FileRecord>())!;
+        return (record, content);
+    }
+
+    [Fact]
+    public async Task Download_ExistingFile_ReturnsFileStream()
+    {
+        // Arrange
+        var expectedContent = TestHelpers.CreateTextContent("Hello, World!");
+        var (record, _) = await UploadTestFile(content: expectedContent);
+
+        // Act
+        var response = await _client.GetAsync($"/files/{record.Id}/content");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var downloadedContent = await response.Content.ReadAsByteArrayAsync();
+        downloadedContent.Should().BeEquivalentTo(expectedContent);
+    }
+
+    [Fact]
+    public async Task Download_ExistingFile_HasCorrectContentType()
+    {
+        // Arrange
+        var (record, _) = await UploadTestFile("document.pdf", "application/pdf");
+
+        // Act
+        var response = await _client.GetAsync($"/files/{record.Id}/content");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+    }
+
+    [Fact]
+    public async Task Download_ExistingFile_HasCorrectFileName()
+    {
+        // Arrange
+        var (record, _) = await UploadTestFile("report.pdf", "application/pdf");
+
+        // Act
+        var response = await _client.GetAsync($"/files/{record.Id}/content");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var contentDisposition = response.Content.Headers.ContentDisposition;
+        contentDisposition.Should().NotBeNull();
+        contentDisposition!.FileName.Should().Contain("report.pdf");
+    }
+
+    [Fact]
+    public async Task Download_NonExistingFile_Returns404()
+    {
+        // Arrange
+        var randomId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.GetAsync($"/files/{randomId}/content");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+}
