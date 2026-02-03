@@ -75,8 +75,8 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         // Verify the substitute was called with the correct filename
-        await _factory.FileStorageSubstitute!
-            .Received(1)
+        await _factory
+            .FileStorageSubstitute!.Received(1)
             .GetPresignedUploadUrlAsync(fileName, Arg.Any<CancellationToken>());
     }
 }

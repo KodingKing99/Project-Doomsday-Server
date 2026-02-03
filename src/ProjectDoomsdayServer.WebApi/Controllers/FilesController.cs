@@ -8,24 +8,23 @@ namespace ProjectDoomsdayServer.WebApi.Controllers;
 [Route("files")]
 public sealed class FilesController : ControllerBase
 {
-    private readonly FileService _filesService;
+    private readonly IFilesService _filesService;
 
-    public FilesController(FileService fileService) => _filesService = fileService;
+    public FilesController(IFilesService filesService) => _filesService = filesService;
 
     [HttpPost]
-    [RequestSizeLimit(524_288_000)]
-    public async Task<ActionResult<FileRecord>> Upload(IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<FileRecord>> Upsert(
+        [FromBody] FileRecord record,
+        CancellationToken ct
+    )
     {
-        if (file == null || file.Length == 0)
-            return BadRequest("No file");
-        await using var stream = file.OpenReadStream();
-        var rec = await _filesService.UploadAsync(
-            file.FileName,
-            file.ContentType ?? "application/octet-stream",
-            stream,
-            ct
-        );
-        return CreatedAtAction(nameof(GetById), new { id = rec.Id }, rec);
+        var existing = await _filesService.GetAsync(record.Id, ct);
+        var result = await _filesService.UpsertAsync(record, ct);
+
+        if (existing is null)
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+
+        return Ok(result);
     }
 
     [HttpGet]
@@ -47,17 +46,6 @@ public sealed class FilesController : ControllerBase
             return NotFound();
         var stream = await _filesService.DownloadAsync(id, ct);
         return File(stream, rec.ContentType, rec.FileName);
-    }
-
-    [HttpPut("{id:guid}/metadata")]
-    public async Task<IActionResult> UpdateMetadata(
-        Guid id,
-        [FromBody] Dictionary<string, string> metadata,
-        CancellationToken ct
-    )
-    {
-        await _filesService.UpdateMetadataAsync(id, metadata, ct);
-        return NoContent();
     }
 
     [HttpDelete("{id:guid}")]

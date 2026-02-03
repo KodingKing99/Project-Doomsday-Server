@@ -58,9 +58,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .Returns(callInfo =>
                 {
                     var id = callInfo.ArgAt<Guid>(0);
-                    if (!SavedFiles.TryGetValue(id, out var content))
-                        throw new FileNotFoundException($"File {id} not found");
-                    return Task.FromResult<Stream>(new MemoryStream(content));
+                    // Return saved content if exists, otherwise return dummy content
+                    // (simulates client having uploaded directly to S3)
+                    if (SavedFiles.TryGetValue(id, out var content))
+                        return Task.FromResult<Stream>(new MemoryStream(content));
+                    return Task.FromResult<Stream>(new MemoryStream("dummy content"u8.ToArray()));
                 });
 
             storageSub

@@ -18,41 +18,41 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<(FileRecord Record, byte[] Content)> UploadTestFile(
+    private async Task<FileRecord> UpsertTestFile(
         string fileName = "test.txt",
         string contentType = "text/plain",
-        byte[]? content = null
+        long sizeBytes = 100
     )
     {
-        content ??= TestHelpers.CreateTextContent("Test content for download");
-        using var form = TestHelpers.CreateFileUpload(fileName, content, contentType);
-        var response = await _client.PostAsync("/files", form);
+        var record = new FileRecord
+        {
+            FileName = fileName,
+            ContentType = contentType,
+            SizeBytes = sizeBytes,
+        };
+        var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
-        var record = (await response.Content.ReadFromJsonAsync<FileRecord>())!;
-        return (record, content);
+        return (await response.Content.ReadFromJsonAsync<FileRecord>())!;
     }
 
     [Fact]
     public async Task Download_ExistingFile_ReturnsFileStream()
     {
         // Arrange
-        var expectedContent = TestHelpers.CreateTextContent("Hello, World!");
-        var (record, _) = await UploadTestFile(content: expectedContent);
+        var record = await UpsertTestFile();
 
         // Act
         var response = await _client.GetAsync($"/files/{record.Id}/content");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var downloadedContent = await response.Content.ReadAsByteArrayAsync();
-        downloadedContent.Should().BeEquivalentTo(expectedContent);
     }
 
     [Fact]
     public async Task Download_ExistingFile_HasCorrectContentType()
     {
         // Arrange
-        var (record, _) = await UploadTestFile("document.pdf", "application/pdf");
+        var record = await UpsertTestFile("document.pdf", "application/pdf");
 
         // Act
         var response = await _client.GetAsync($"/files/{record.Id}/content");
@@ -66,7 +66,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Download_ExistingFile_HasCorrectFileName()
     {
         // Arrange
-        var (record, _) = await UploadTestFile("report.pdf", "application/pdf");
+        var record = await UpsertTestFile("report.pdf", "application/pdf");
 
         // Act
         var response = await _client.GetAsync($"/files/{record.Id}/content");

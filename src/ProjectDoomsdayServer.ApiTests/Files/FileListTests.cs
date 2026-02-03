@@ -18,6 +18,17 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
+    private async Task UpsertTestFile(string fileName, string contentType = "text/plain")
+    {
+        var record = new FileRecord
+        {
+            FileName = fileName,
+            ContentType = contentType,
+            SizeBytes = 100,
+        };
+        await _client.PostAsJsonAsync("/files", record);
+    }
+
     [Fact]
     public async Task List_NoFiles_ReturnsEmptyList()
     {
@@ -36,12 +47,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_WithFiles_ReturnsFileRecords()
     {
-        // Arrange - Upload 3 files
+        // Arrange - Upsert 3 files
         for (var i = 1; i <= 3; i++)
         {
-            var content = TestHelpers.CreateTextContent($"File {i} content");
-            using var form = TestHelpers.CreateFileUpload($"file{i}.txt", content, "text/plain");
-            await _client.PostAsync("/files", form);
+            await UpsertTestFile($"file{i}.txt");
         }
 
         // Act
@@ -57,12 +66,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_Pagination_Skip_Works()
     {
-        // Arrange - Upload 5 files
+        // Arrange - Upsert 5 files
         for (var i = 1; i <= 5; i++)
         {
-            var content = TestHelpers.CreateTextContent($"File {i}");
-            using var form = TestHelpers.CreateFileUpload($"file{i}.txt", content, "text/plain");
-            await _client.PostAsync("/files", form);
+            await UpsertTestFile($"file{i}.txt");
         }
 
         // Act
@@ -78,12 +85,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_Pagination_Take_Works()
     {
-        // Arrange - Upload 5 files
+        // Arrange - Upsert 5 files
         for (var i = 1; i <= 5; i++)
         {
-            var content = TestHelpers.CreateTextContent($"File {i}");
-            using var form = TestHelpers.CreateFileUpload($"file{i}.txt", content, "text/plain");
-            await _client.PostAsync("/files", form);
+            await UpsertTestFile($"file{i}.txt");
         }
 
         // Act
@@ -99,12 +104,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_Pagination_TakeClamped_To200Max()
     {
-        // Arrange - Upload 10 files (simulating larger set)
+        // Arrange - Upsert 10 files (simulating larger set)
         for (var i = 1; i <= 10; i++)
         {
-            var content = TestHelpers.CreateTextContent($"File {i}");
-            using var form = TestHelpers.CreateFileUpload($"file{i}.txt", content, "text/plain");
-            await _client.PostAsync("/files", form);
+            await UpsertTestFile($"file{i}.txt");
         }
 
         // Act - Request 500 but should be clamped to 200
@@ -121,16 +124,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_OrderedByUpdatedAtDescending()
     {
-        // Arrange - Upload files with delays
-        var content1 = TestHelpers.CreateTextContent("First");
-        using var form1 = TestHelpers.CreateFileUpload("first.txt", content1, "text/plain");
-        await _client.PostAsync("/files", form1);
-
+        // Arrange - Upsert files with delays
+        await UpsertTestFile("first.txt");
         await Task.Delay(50); // Small delay to ensure different timestamps
-
-        var content2 = TestHelpers.CreateTextContent("Second");
-        using var form2 = TestHelpers.CreateFileUpload("second.txt", content2, "text/plain");
-        await _client.PostAsync("/files", form2);
+        await UpsertTestFile("second.txt");
 
         // Act
         var response = await _client.GetAsync("/files");

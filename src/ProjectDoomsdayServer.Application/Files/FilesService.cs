@@ -2,37 +2,23 @@ using ProjectDoomsdayServer.Domain.Files;
 
 namespace ProjectDoomsdayServer.Application.Files;
 
-public sealed class FileService
+public sealed class FilesService : IFilesService
 {
     private readonly IFileRepository _repo;
     private readonly IFileStorage _storage;
 
-    public FileService(IFileRepository repo, IFileStorage storage)
+    public FilesService(IFileRepository repo, IFileStorage storage)
     {
         _repo = repo;
         _storage = storage;
     }
 
-    public async Task<FileRecord> UploadAsync(
-        string fileName,
-        string contentType,
-        Stream content,
+    public async Task<FileRecord> UpsertAsync(
+        FileRecord record,
         CancellationToken cancellationToken
     )
     {
-        var record = new FileRecord
-        {
-            FileName = fileName,
-            ContentType = contentType,
-            UpdatedAtUtc = DateTimeOffset.UtcNow,
-        };
-
-        using var ms = new MemoryStream();
-        await content.CopyToAsync(ms, cancellationToken);
-        record.SizeBytes = ms.Length;
-
-        ms.Position = 0;
-        await _storage.SaveAsync(record.Id, ms, cancellationToken);
+        record.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await _repo.UpsertAsync(record, cancellationToken);
         return record;
     }
@@ -50,21 +36,6 @@ public sealed class FileService
     {
         await _storage.DeleteAsync(id, cancellationToken);
         await _repo.DeleteAsync(id, cancellationToken);
-    }
-
-    public async Task UpdateMetadataAsync(
-        Guid id,
-        Dictionary<string, string> metadata,
-        CancellationToken cancellationToken
-    )
-    {
-        var rec =
-            await _repo.GetAsync(id, cancellationToken)
-            ?? throw new KeyNotFoundException("File not found");
-        foreach (var kv in metadata)
-            rec.Metadata[kv.Key] = kv.Value;
-        rec.UpdatedAtUtc = DateTimeOffset.UtcNow;
-        await _repo.UpsertAsync(rec, cancellationToken);
     }
 
     public Task<Stream> DownloadAsync(Guid id, CancellationToken cancellationToken) =>

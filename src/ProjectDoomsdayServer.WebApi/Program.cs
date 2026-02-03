@@ -13,7 +13,7 @@ builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 builder.Services.AddSingleton<IFileRepository, InMemoryFileRepository>();
-builder.Services.AddScoped<FileService>();
+builder.Services.AddScoped<IFilesService, FilesService>();
 
 #region AWS
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());

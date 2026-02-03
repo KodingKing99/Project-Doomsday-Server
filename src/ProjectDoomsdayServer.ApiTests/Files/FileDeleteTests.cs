@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
-using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.Files;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
@@ -20,11 +19,15 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<FileRecord> UploadTestFile(string fileName = "test.txt")
+    private async Task<FileRecord> UpsertTestFile(string fileName = "test.txt")
     {
-        var content = TestHelpers.CreateTextContent("Test content");
-        using var form = TestHelpers.CreateFileUpload(fileName, content, "text/plain");
-        var response = await _client.PostAsync("/files", form);
+        var record = new FileRecord
+        {
+            FileName = fileName,
+            ContentType = "text/plain",
+            SizeBytes = 100,
+        };
+        var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<FileRecord>())!;
     }
@@ -33,10 +36,10 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_ExistingFile_Returns204()
     {
         // Arrange
-        var uploaded = await UploadTestFile();
+        var created = await UpsertTestFile();
 
         // Act
-        var response = await _client.DeleteAsync($"/files/{uploaded.Id}");
+        var response = await _client.DeleteAsync($"/files/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -46,27 +49,27 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_ExistingFile_RemovesFromStorage()
     {
         // Arrange
-        var uploaded = await UploadTestFile();
+        var created = await UpsertTestFile();
 
         // Act
-        await _client.DeleteAsync($"/files/{uploaded.Id}");
+        await _client.DeleteAsync($"/files/{created.Id}");
 
         // Assert
-        await _factory.FileStorageSubstitute!
-            .Received(1)
-            .DeleteAsync(uploaded.Id, Arg.Any<CancellationToken>());
-        _factory.DeletedFileIds.Should().Contain(uploaded.Id);
+        await _factory
+            .FileStorageSubstitute!.Received(1)
+            .DeleteAsync(created.Id, Arg.Any<CancellationToken>());
+        _factory.DeletedFileIds.Should().Contain(created.Id);
     }
 
     [Fact]
     public async Task Delete_ExistingFile_RemovesFromRepository()
     {
         // Arrange
-        var uploaded = await UploadTestFile();
+        var created = await UpsertTestFile();
 
         // Act
-        await _client.DeleteAsync($"/files/{uploaded.Id}");
-        var response = await _client.GetAsync($"/files/{uploaded.Id}");
+        await _client.DeleteAsync($"/files/{created.Id}");
+        var response = await _client.GetAsync($"/files/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
