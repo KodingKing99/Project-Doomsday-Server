@@ -2,7 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -18,9 +19,9 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<FileRecord> UpsertTestFile(FileRecord? record = null)
+    private async Task<File> UpsertTestFile(File? record = null)
     {
-        record ??= new FileRecord
+        record ??= new File
         {
             FileName = "test.txt",
             ContentType = "text/plain",
@@ -28,14 +29,14 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         };
         var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<FileRecord>())!;
+        return (await response.Content.ReadFromJsonAsync<File>())!;
     }
 
     [Fact]
-    public async Task Upsert_NewFile_ReturnsCreatedWithFileRecord()
+    public async Task Upsert_NewFile_ReturnsCreatedWithFile()
     {
         // Arrange
-        var record = new FileRecord
+        var record = new File
         {
             FileName = "test.txt",
             ContentType = "text/plain",
@@ -47,7 +48,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await response.Content.ReadFromJsonAsync<FileRecord>();
+        var result = await response.Content.ReadFromJsonAsync<File>();
         result.Should().NotBeNull();
         result!.Id.Should().Be(record.Id);
         result.FileName.Should().Be("test.txt");
@@ -61,7 +62,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     {
         // Arrange
         var original = await UpsertTestFile();
-        var updated = new FileRecord
+        var updated = new File
         {
             Id = original.Id,
             FileName = "updated.txt",
@@ -74,7 +75,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<FileRecord>();
+        var result = await response.Content.ReadFromJsonAsync<File>();
         result.Should().NotBeNull();
         result!.Id.Should().Be(original.Id);
         result.FileName.Should().Be("updated.txt");
@@ -85,7 +86,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Upsert_WithMetadata_PersistsMetadata()
     {
         // Arrange
-        var record = new FileRecord
+        var record = new File
         {
             FileName = "test.txt",
             ContentType = "text/plain",
@@ -95,7 +96,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync("/files", record);
-        var result = await response.Content.ReadFromJsonAsync<FileRecord>();
+        var result = await response.Content.ReadFromJsonAsync<File>();
 
         // Assert
         result.Should().NotBeNull();
@@ -113,7 +114,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var originalUpdatedAt = original.UpdatedAtUtc;
         await Task.Delay(50);
 
-        var updated = new FileRecord
+        var updated = new File
         {
             Id = original.Id,
             FileName = "updated.txt",
@@ -123,7 +124,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync("/files", updated);
-        var result = await response.Content.ReadFromJsonAsync<FileRecord>();
+        var result = await response.Content.ReadFromJsonAsync<File>();
 
         // Assert
         result.Should().NotBeNull();
@@ -131,7 +132,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetById_ExistingFile_ReturnsFileRecord()
+    public async Task GetById_ExistingFile_ReturnsFile()
     {
         // Arrange
         var created = await UpsertTestFile();
@@ -141,7 +142,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var record = await response.Content.ReadFromJsonAsync<FileRecord>();
+        var record = await response.Content.ReadFromJsonAsync<File>();
         record.Should().NotBeNull();
         record!.Id.Should().Be(created.Id);
         record.FileName.Should().Be(created.FileName);
@@ -171,11 +172,11 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task List_ReturnsFileRecords()
+    public async Task List_ReturnsFiles()
     {
         // Arrange
         await UpsertTestFile(
-            new FileRecord
+            new File
             {
                 FileName = "file1.txt",
                 ContentType = "text/plain",
@@ -183,7 +184,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
             }
         );
         await UpsertTestFile(
-            new FileRecord
+            new File
             {
                 FileName = "file2.txt",
                 ContentType = "text/plain",
@@ -196,7 +197,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         records!.Count.Should().BeGreaterThanOrEqualTo(2);
     }

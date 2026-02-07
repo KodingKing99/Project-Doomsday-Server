@@ -2,7 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -22,7 +23,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     public async Task FullCrudFlow_UpsertListGetUpdateDelete_Succeeds()
     {
         // 1. Create file record -> get ID
-        var record = new FileRecord
+        var record = new File
         {
             FileName = "integration-test.txt",
             ContentType = "text/plain",
@@ -30,27 +31,27 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         };
         var createResponse = await _client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var createdRecord = await createResponse.Content.ReadFromJsonAsync<FileRecord>();
+        var createdRecord = await createResponse.Content.ReadFromJsonAsync<File>();
         createdRecord.Should().NotBeNull();
         var fileId = createdRecord!.Id;
 
         // 2. List files -> verify file appears
         var listResponse = await _client.GetAsync("/files");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var files = await listResponse.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
         files.Should().NotBeNull();
         files.Should().Contain(f => f.Id == fileId);
 
         // 3. Get file by ID -> verify metadata
         var getResponse = await _client.GetAsync($"/files/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var fetchedRecord = await getResponse.Content.ReadFromJsonAsync<FileRecord>();
+        var fetchedRecord = await getResponse.Content.ReadFromJsonAsync<File>();
         fetchedRecord.Should().NotBeNull();
         fetchedRecord!.FileName.Should().Be("integration-test.txt");
         fetchedRecord.ContentType.Should().Be("text/plain");
 
         // 4. Update via upsert -> verify change
-        var updatedRecord = new FileRecord
+        var updatedRecord = new File
         {
             Id = fileId,
             FileName = "integration-test-updated.txt",
@@ -63,7 +64,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Verify update was applied
         var getAfterUpdateResponse = await _client.GetAsync($"/files/{fileId}");
-        var afterUpdate = await getAfterUpdateResponse.Content.ReadFromJsonAsync<FileRecord>();
+        var afterUpdate = await getAfterUpdateResponse.Content.ReadFromJsonAsync<File>();
         afterUpdate.Should().NotBeNull();
         afterUpdate!.FileName.Should().Be("integration-test-updated.txt");
         afterUpdate.SizeBytes.Should().Be(2048);
@@ -84,7 +85,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     public async Task UpsertThenDownload_Succeeds()
     {
         // Arrange - Create file record (client would upload to S3 separately)
-        var record = new FileRecord
+        var record = new File
         {
             FileName = "binary-test.bin",
             ContentType = "application/octet-stream",
@@ -94,7 +95,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         // Act - Upsert file record
         var upsertResponse = await _client.PostAsJsonAsync("/files", record);
         upsertResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await upsertResponse.Content.ReadFromJsonAsync<FileRecord>();
+        var result = await upsertResponse.Content.ReadFromJsonAsync<File>();
         result.Should().NotBeNull();
 
         // Download file (content comes from mocked storage)

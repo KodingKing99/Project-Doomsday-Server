@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files;
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.WebApi.Controllers;
 
@@ -13,10 +14,7 @@ public sealed class FilesController : ControllerBase
     public FilesController(IFilesService filesService) => _filesService = filesService;
 
     [HttpPost]
-    public async Task<ActionResult<FileRecord>> Upsert(
-        [FromBody] FileRecord record,
-        CancellationToken ct
-    )
+    public async Task<ActionResult<File>> Upsert([FromBody] File record, CancellationToken ct)
     {
         var existing = await _filesService.GetAsync(record.Id, ct);
         var result = await _filesService.UpsertAsync(record, ct);
@@ -28,14 +26,14 @@ public sealed class FilesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<FileRecord>>> List(
+    public async Task<ActionResult<IReadOnlyList<File>>> List(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50,
         CancellationToken ct = default
     ) => Ok(await _filesService.ListAsync(skip, Math.Clamp(take, 1, 200), ct));
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<FileRecord>> GetById(Guid id, CancellationToken ct) =>
+    public async Task<ActionResult<File>> GetById(Guid id, CancellationToken ct) =>
         (await _filesService.GetAsync(id, ct)) is { } rec ? Ok(rec) : NotFound();
 
     [HttpGet("{id:guid}/content")]

@@ -3,7 +3,8 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -19,9 +20,9 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<FileRecord> UpsertTestFile(string fileName = "test.txt")
+    private async Task<File> UpsertTestFile(string fileName = "test.txt")
     {
-        var record = new FileRecord
+        var record = new File
         {
             FileName = fileName,
             ContentType = "text/plain",
@@ -29,7 +30,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         };
         var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<FileRecord>())!;
+        return (await response.Content.ReadFromJsonAsync<File>())!;
     }
 
     [Fact]

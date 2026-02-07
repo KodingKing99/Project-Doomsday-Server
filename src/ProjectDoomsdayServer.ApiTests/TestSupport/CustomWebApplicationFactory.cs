@@ -6,7 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using ProjectDoomsdayServer.Application.Files;
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.TestSupport;
 
@@ -18,7 +19,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     // Track operations for assertions
     public ConcurrentDictionary<Guid, byte[]> SavedFiles { get; } = new();
     public ConcurrentBag<Guid> DeletedFileIds { get; } = new();
-    public ConcurrentDictionary<Guid, FileRecord> FileRecords { get; } = new();
+    public ConcurrentDictionary<Guid, File> FileRecords { get; } = new();
 
     private static void RemoveService<T>(IServiceCollection services)
     {
@@ -95,7 +96,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 {
                     var id = callInfo.ArgAt<Guid>(0);
                     FileRecords.TryGetValue(id, out var rec);
-                    return Task.FromResult<FileRecord?>(rec);
+                    return Task.FromResult<File?>(rec);
                 });
 
             repoSub
@@ -109,14 +110,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                         .Skip(skip)
                         .Take(take)
                         .ToList();
-                    return Task.FromResult<IReadOnlyList<FileRecord>>(list);
+                    return Task.FromResult<IReadOnlyList<File>>(list);
                 });
 
             repoSub
-                .UpsertAsync(Arg.Any<FileRecord>(), Arg.Any<CancellationToken>())
+                .UpsertAsync(Arg.Any<File>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var record = callInfo.ArgAt<FileRecord>(0);
+                    var record = callInfo.ArgAt<File>(0);
                     FileRecords[record.Id] = record;
                     return Task.CompletedTask;
                 });

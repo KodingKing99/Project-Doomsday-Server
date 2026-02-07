@@ -2,7 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -20,7 +21,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
     private async Task UpsertTestFile(string fileName, string contentType = "text/plain")
     {
-        var record = new FileRecord
+        var record = new File
         {
             FileName = fileName,
             ContentType = contentType,
@@ -39,7 +40,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         records.Should().BeEmpty();
     }
@@ -58,7 +59,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         records.Should().HaveCount(3);
     }
@@ -77,7 +78,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         records.Should().HaveCount(3);
     }
@@ -96,7 +97,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         records.Should().HaveCount(2);
     }
@@ -115,7 +116,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         // Should return all 10 since we only have 10 (but limit would be 200)
         records.Should().HaveCountLessThanOrEqualTo(200);
@@ -134,7 +135,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await response.Content.ReadFromJsonAsync<List<FileRecord>>();
+        var records = await response.Content.ReadFromJsonAsync<List<File>>();
         records.Should().NotBeNull();
         records.Should().HaveCount(2);
         // Most recently updated should be first

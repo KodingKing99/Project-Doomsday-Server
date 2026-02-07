@@ -1,4 +1,5 @@
-using ProjectDoomsdayServer.Domain.Files;
+using ProjectDoomsdayServer.Domain.DB_Models;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files;
 
@@ -13,20 +14,17 @@ public sealed class FilesService : IFilesService
         _storage = storage;
     }
 
-    public async Task<FileRecord> UpsertAsync(
-        FileRecord record,
-        CancellationToken cancellationToken
-    )
+    public async Task<File> UpsertAsync(File record, CancellationToken cancellationToken)
     {
         record.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await _repo.UpsertAsync(record, cancellationToken);
         return record;
     }
 
-    public Task<FileRecord?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+    public Task<File?> GetAsync(Guid id, CancellationToken cancellationToken) =>
         _repo.GetAsync(id, cancellationToken);
 
-    public Task<IReadOnlyList<FileRecord>> ListAsync(
+    public Task<IReadOnlyList<File>> ListAsync(
         int skip,
         int take,
         CancellationToken cancellationToken
