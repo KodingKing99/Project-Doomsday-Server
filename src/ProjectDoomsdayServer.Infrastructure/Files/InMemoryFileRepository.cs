@@ -24,6 +24,9 @@ public sealed class InMemoryFileRepository : IFileRepository
 
     public Task UpsertAsync(File file, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(file.Id))
+            file.Id = Guid.NewGuid().ToString("N");
+
         _db[file.Id] = file;
         return Task.CompletedTask;
     }

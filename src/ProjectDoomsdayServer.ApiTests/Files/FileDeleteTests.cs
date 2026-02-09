@@ -24,7 +24,6 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     {
         var record = new File
         {
-            Id = Guid.NewGuid().ToString("N"),
             FileName = fileName,
             ContentType = "text/plain",
             SizeBytes = 100,

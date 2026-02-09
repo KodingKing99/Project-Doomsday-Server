@@ -23,7 +23,6 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     {
         record ??= new File
         {
-            Id = Guid.NewGuid().ToString("N"),
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
@@ -39,7 +38,6 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var record = new File
         {
-            Id = Guid.NewGuid().ToString("N"),
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 1024,
@@ -52,7 +50,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var result = await response.Content.ReadFromJsonAsync<File>();
         result.Should().NotBeNull();
-        result!.Id.Should().Be(record.Id);
+        result!.Id.Should().NotBeNullOrEmpty();
         result.FileName.Should().Be("test.txt");
         result.ContentType.Should().Be("text/plain");
         result.SizeBytes.Should().Be(1024);
@@ -90,7 +88,6 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var record = new File
         {
-            Id = Guid.NewGuid().ToString("N"),
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
@@ -181,7 +178,6 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         await UpsertTestFile(
             new File
             {
-                Id = Guid.NewGuid().ToString("N"),
                 FileName = "file1.txt",
                 ContentType = "text/plain",
                 SizeBytes = 100,
@@ -190,7 +186,6 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         await UpsertTestFile(
             new File
             {
-                Id = Guid.NewGuid().ToString("N"),
                 FileName = "file2.txt",
                 ContentType = "text/plain",
                 SizeBytes = 200,

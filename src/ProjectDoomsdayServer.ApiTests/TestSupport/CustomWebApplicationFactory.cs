@@ -118,6 +118,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .Returns(callInfo =>
                 {
                     var record = callInfo.ArgAt<File>(0);
+                    if (string.IsNullOrEmpty(record.Id))
+                        record.Id = Guid.NewGuid().ToString("N");
                     FileRecords[record.Id] = record;
                     return Task.CompletedTask;
                 });

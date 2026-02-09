@@ -16,7 +16,9 @@ public sealed class FilesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<File>> Upsert([FromBody] File record, CancellationToken ct)
     {
-        var existing = await _filesService.GetAsync(record.Id, ct);
+        var existing = string.IsNullOrEmpty(record.Id)
+            ? null
+            : await _filesService.GetAsync(record.Id, ct);
         var result = await _filesService.UpsertAsync(record, ct);
 
         if (existing is null)

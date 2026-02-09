@@ -25,7 +25,6 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         // 1. Create file record -> get ID
         var record = new File
         {
-            Id = Guid.NewGuid().ToString("N"),
             FileName = "integration-test.txt",
             ContentType = "text/plain",
             SizeBytes = 1024,
@@ -34,7 +33,8 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdRecord = await createResponse.Content.ReadFromJsonAsync<File>();
         createdRecord.Should().NotBeNull();
-        var fileId = createdRecord!.Id;
+        createdRecord!.Id.Should().NotBeNullOrEmpty();
+        var fileId = createdRecord.Id;
 
         // 2. List files -> verify file appears
         var listResponse = await _client.GetAsync("/files");
@@ -88,7 +88,6 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         // Arrange - Create file record (client would upload to S3 separately)
         var record = new File
         {
-            Id = Guid.NewGuid().ToString("N"),
             FileName = "binary-test.bin",
             ContentType = "application/octet-stream",
             SizeBytes = 1024,
