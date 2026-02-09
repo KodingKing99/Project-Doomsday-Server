@@ -23,6 +23,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     {
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = fileName,
             ContentType = contentType,
             SizeBytes = 100,

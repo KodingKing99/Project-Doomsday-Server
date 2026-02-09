@@ -32,12 +32,12 @@ public sealed class FilesController : ControllerBase
         CancellationToken ct = default
     ) => Ok(await _filesService.ListAsync(skip, Math.Clamp(take, 1, 200), ct));
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<File>> GetById(Guid id, CancellationToken ct) =>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<File>> GetById(string id, CancellationToken ct) =>
         (await _filesService.GetAsync(id, ct)) is { } rec ? Ok(rec) : NotFound();
 
-    [HttpGet("{id:guid}/content")]
-    public async Task<IActionResult> Download(Guid id, CancellationToken ct)
+    [HttpGet("{id}/content")]
+    public async Task<IActionResult> Download(string id, CancellationToken ct)
     {
         var rec = await _filesService.GetAsync(id, ct);
         if (rec is null)
@@ -46,8 +46,8 @@ public sealed class FilesController : ControllerBase
         return File(stream, rec.ContentType, rec.FileName);
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id, CancellationToken ct)
     {
         await _filesService.DeleteAsync(id, ct);
         return NoContent();

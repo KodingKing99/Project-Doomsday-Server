@@ -25,6 +25,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         // 1. Create file record -> get ID
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = "integration-test.txt",
             ContentType = "text/plain",
             SizeBytes = 1024,
@@ -87,6 +88,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         // Arrange - Create file record (client would upload to S3 separately)
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = "binary-test.bin",
             ContentType = "application/octet-stream",
             SizeBytes = 1024,

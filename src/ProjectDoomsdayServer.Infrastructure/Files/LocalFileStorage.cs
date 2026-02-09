@@ -12,16 +12,16 @@ public sealed class LocalFileStorage : IFileStorage
         Directory.CreateDirectory(_root);
     }
 
-    private string PathFor(Guid id) => Path.Combine(_root, id.ToString("N"));
+    private string PathFor(string id) => Path.Combine(_root, id);
 
-    public async Task SaveAsync(Guid id, Stream content, CancellationToken ct)
+    public async Task SaveAsync(string id, Stream content, CancellationToken ct)
     {
         var path = PathFor(id);
         using var fs = File.Create(path);
         await content.CopyToAsync(fs, ct);
     }
 
-    public Task<Stream> OpenReadAsync(Guid id, CancellationToken ct)
+    public Task<Stream> OpenReadAsync(string id, CancellationToken ct)
     {
         var path = PathFor(id);
         if (!File.Exists(path))
@@ -29,7 +29,7 @@ public sealed class LocalFileStorage : IFileStorage
         return Task.FromResult<Stream>(File.OpenRead(path));
     }
 
-    public Task DeleteAsync(Guid id, CancellationToken ct)
+    public Task DeleteAsync(string id, CancellationToken ct)
     {
         var path = PathFor(id);
         if (File.Exists(path))
@@ -37,7 +37,7 @@ public sealed class LocalFileStorage : IFileStorage
         return Task.CompletedTask;
     }
 
-    public Task<bool> ExistsAsync(Guid id, CancellationToken ct) =>
+    public Task<bool> ExistsAsync(string id, CancellationToken ct) =>
         Task.FromResult(File.Exists(PathFor(id)));
 
     public Task<string> GetPresignedUploadUrlAsync(

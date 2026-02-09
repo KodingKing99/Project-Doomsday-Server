@@ -5,8 +5,8 @@ namespace ProjectDoomsdayServer.Application.Files;
 
 public interface IFileRepository
 {
-    Task<File?> GetAsync(Guid id, CancellationToken ct);
+    Task<File?> GetAsync(string id, CancellationToken ct);
     Task<IReadOnlyList<File>> ListAsync(int skip, int take, CancellationToken ct);
     Task UpsertAsync(File file, CancellationToken ct);
-    Task DeleteAsync(Guid id, CancellationToken ct);
+    Task DeleteAsync(string id, CancellationToken ct);
 }

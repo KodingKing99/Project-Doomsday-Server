@@ -18,12 +18,12 @@ public class S3FileStorage : IFileStorage
         _config = config.Value;
     }
 
-    public Task DeleteAsync(Guid id, CancellationToken ct)
+    public Task DeleteAsync(string id, CancellationToken ct)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> ExistsAsync(Guid id, CancellationToken ct)
+    public Task<bool> ExistsAsync(string id, CancellationToken ct)
     {
         throw new NotImplementedException();
     }
@@ -62,12 +62,12 @@ public class S3FileStorage : IFileStorage
         return Task.FromResult(url);
     }
 
-    public Task<Stream> OpenReadAsync(Guid id, CancellationToken ct)
+    public Task<Stream> OpenReadAsync(string id, CancellationToken ct)
     {
         throw new NotImplementedException();
     }
 
-    public Task SaveAsync(Guid id, Stream content, CancellationToken ct)
+    public Task SaveAsync(string id, Stream content, CancellationToken ct)
     {
         throw new NotImplementedException();
     }

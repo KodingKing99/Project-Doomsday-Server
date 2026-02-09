@@ -7,9 +7,9 @@ namespace ProjectDoomsdayServer.Infrastructure.Files;
 
 public sealed class InMemoryFileRepository : IFileRepository
 {
-    private readonly ConcurrentDictionary<Guid, File> _db = new();
+    private readonly ConcurrentDictionary<string, File> _db = new();
 
-    public Task<File?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+    public Task<File?> GetAsync(string id, CancellationToken cancellationToken) =>
         Task.FromResult(_db.TryGetValue(id, out var rec) ? rec : null);
 
     public Task<IReadOnlyList<File>> ListAsync(
@@ -28,7 +28,7 @@ public sealed class InMemoryFileRepository : IFileRepository
         return Task.CompletedTask;
     }
 
-    public Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    public Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         _db.TryRemove(id, out _);
         return Task.CompletedTask;

@@ -12,7 +12,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
-builder.Services.AddSingleton<IFileRepository, InMemoryFileRepository>();
+builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
 builder.Services.AddScoped<IFilesService, FilesService>();
 
 #region AWS
@@ -20,6 +20,8 @@ builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.Configure<S3Config>(builder.Configuration.GetSection("S3"));
 #endregion AWS
+
+builder.Services.Configure<MongoDbConfig>(builder.Configuration.GetSection("MongoDB"));
 
 // Register infrastructure services (including S3FileStorage, etc.)
 builder.Services.AddInfrastructureServices();

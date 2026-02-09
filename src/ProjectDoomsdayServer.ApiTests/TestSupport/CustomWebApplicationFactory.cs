@@ -17,9 +17,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public IFileRepository? FileRepositorySubstitute { get; private set; }
 
     // Track operations for assertions
-    public ConcurrentDictionary<Guid, byte[]> SavedFiles { get; } = new();
-    public ConcurrentBag<Guid> DeletedFileIds { get; } = new();
-    public ConcurrentDictionary<Guid, File> FileRecords { get; } = new();
+    public ConcurrentDictionary<string, byte[]> SavedFiles { get; } = new();
+    public ConcurrentBag<string> DeletedFileIds { get; } = new();
+    public ConcurrentDictionary<string, File> FileRecords { get; } = new();
 
     private static void RemoveService<T>(IServiceCollection services)
     {
@@ -43,10 +43,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .Returns(call => Task.FromResult("https://example.com/presigned-url"));
 
             storageSub
-                .SaveAsync(Arg.Any<Guid>(), Arg.Any<Stream>(), Arg.Any<CancellationToken>())
+                .SaveAsync(Arg.Any<string>(), Arg.Any<Stream>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var id = callInfo.ArgAt<Guid>(0);
+                    var id = callInfo.ArgAt<string>(0);
                     var stream = callInfo.ArgAt<Stream>(1);
                     using var ms = new MemoryStream();
                     stream.CopyTo(ms);
@@ -55,10 +55,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             storageSub
-                .OpenReadAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                .OpenReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var id = callInfo.ArgAt<Guid>(0);
+                    var id = callInfo.ArgAt<string>(0);
                     // Return saved content if exists, otherwise return dummy content
                     // (simulates client having uploaded directly to S3)
                     if (SavedFiles.TryGetValue(id, out var content))
@@ -67,20 +67,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             storageSub
-                .DeleteAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                .DeleteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var id = callInfo.ArgAt<Guid>(0);
+                    var id = callInfo.ArgAt<string>(0);
                     DeletedFileIds.Add(id);
                     SavedFiles.TryRemove(id, out _);
                     return Task.CompletedTask;
                 });
 
             storageSub
-                .ExistsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                .ExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var id = callInfo.ArgAt<Guid>(0);
+                    var id = callInfo.ArgAt<string>(0);
                     return Task.FromResult(SavedFiles.ContainsKey(id));
                 });
 
@@ -91,10 +91,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             var repoSub = Substitute.For<IFileRepository>();
 
             repoSub
-                .GetAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                .GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var id = callInfo.ArgAt<Guid>(0);
+                    var id = callInfo.ArgAt<string>(0);
                     FileRecords.TryGetValue(id, out var rec);
                     return Task.FromResult<File?>(rec);
                 });
@@ -123,10 +123,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             repoSub
-                .DeleteAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                .DeleteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var id = callInfo.ArgAt<Guid>(0);
+                    var id = callInfo.ArgAt<string>(0);
                     FileRecords.TryRemove(id, out _);
                     return Task.CompletedTask;
                 });

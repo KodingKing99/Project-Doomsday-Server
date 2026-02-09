@@ -27,6 +27,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     {
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = fileName,
             ContentType = contentType,
             SizeBytes = sizeBytes,
@@ -83,7 +84,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Download_NonExistingFile_Returns404()
     {
         // Arrange
-        var randomId = Guid.NewGuid();
+        var randomId = Guid.NewGuid().ToString("N");
 
         // Act
         var response = await _client.GetAsync($"/files/{randomId}/content");

@@ -21,7 +21,7 @@ public sealed class FilesService : IFilesService
         return record;
     }
 
-    public Task<File?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+    public Task<File?> GetAsync(string id, CancellationToken cancellationToken) =>
         _repo.GetAsync(id, cancellationToken);
 
     public Task<IReadOnlyList<File>> ListAsync(
@@ -30,13 +30,13 @@ public sealed class FilesService : IFilesService
         CancellationToken cancellationToken
     ) => _repo.ListAsync(skip, take, cancellationToken);
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         await _storage.DeleteAsync(id, cancellationToken);
         await _repo.DeleteAsync(id, cancellationToken);
     }
 
-    public Task<Stream> DownloadAsync(Guid id, CancellationToken cancellationToken) =>
+    public Task<Stream> DownloadAsync(string id, CancellationToken cancellationToken) =>
         _storage.OpenReadAsync(id, cancellationToken);
 
     public Task<string> GetPresignedUploadUrlAsync(

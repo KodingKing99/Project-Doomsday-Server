@@ -23,6 +23,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     {
         record ??= new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
@@ -38,6 +39,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 1024,
@@ -88,6 +90,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
@@ -152,7 +155,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetById_NonExistingFile_Returns404()
     {
         // Arrange
-        var randomId = Guid.NewGuid();
+        var randomId = Guid.NewGuid().ToString("N");
 
         // Act
         var response = await _client.GetAsync($"/files/{randomId}");
@@ -162,12 +165,12 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetById_InvalidGuid_Returns404()
+    public async Task GetById_InvalidId_Returns404()
     {
         // Act
-        var response = await _client.GetAsync("/files/not-a-guid");
+        var response = await _client.GetAsync("/files/not-a-valid-id");
 
-        // Assert - Returns 404 because route doesn't match
+        // Assert - Returns 404 because no file exists with that ID
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -178,6 +181,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         await UpsertTestFile(
             new File
             {
+                Id = Guid.NewGuid().ToString("N"),
                 FileName = "file1.txt",
                 ContentType = "text/plain",
                 SizeBytes = 100,
@@ -186,6 +190,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         await UpsertTestFile(
             new File
             {
+                Id = Guid.NewGuid().ToString("N"),
                 FileName = "file2.txt",
                 ContentType = "text/plain",
                 SizeBytes = 200,

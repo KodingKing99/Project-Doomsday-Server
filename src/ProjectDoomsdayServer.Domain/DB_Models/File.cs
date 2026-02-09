@@ -1,13 +1,8 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
 namespace ProjectDoomsdayServer.Domain.DB_Models;
 
 public sealed class File
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.String)]
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public string Id { get; init; } = default!;
 
     public string FileName { get; set; } = default!;
     public string ContentType { get; set; } = "application/octet-stream";

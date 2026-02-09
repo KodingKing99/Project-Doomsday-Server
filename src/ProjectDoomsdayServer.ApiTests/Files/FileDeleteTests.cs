@@ -24,6 +24,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     {
         var record = new File
         {
+            Id = Guid.NewGuid().ToString("N"),
             FileName = fileName,
             ContentType = "text/plain",
             SizeBytes = 100,
@@ -81,7 +82,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     {
         // Idempotent delete - no error for missing file
         // Arrange
-        var randomId = Guid.NewGuid();
+        var randomId = Guid.NewGuid().ToString("N");
 
         // Act
         var response = await _client.DeleteAsync($"/files/{randomId}");
