@@ -19,7 +19,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<File> UpsertTestFile(File? record = null)
+    private async Task<File> CreateTestFile(File? record = null)
     {
         record ??= new File
         {
@@ -33,7 +33,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Upsert_NewFile_ReturnsCreatedWithFile()
+    public async Task Create_NewFile_ReturnsCreatedWithFile()
     {
         // Arrange
         var record = new File
@@ -58,20 +58,19 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Upsert_ExistingFile_ReturnsOkWithUpdatedRecord()
+    public async Task Update_ExistingFile_ReturnsOkWithUpdatedRecord()
     {
         // Arrange
-        var original = await UpsertTestFile();
+        var original = await CreateTestFile();
         var updated = new File
         {
-            Id = original.Id,
             FileName = "updated.txt",
             ContentType = "text/plain",
             SizeBytes = 2048,
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", updated);
+        var response = await _client.PutAsJsonAsync($"/files/{original.Id}", updated);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -83,7 +82,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Upsert_WithMetadata_PersistsMetadata()
+    public async Task Create_WithMetadata_PersistsMetadata()
     {
         // Arrange
         var record = new File
@@ -107,23 +106,22 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Upsert_UpdatesTimestamp()
+    public async Task Update_UpdatesTimestamp()
     {
         // Arrange
-        var original = await UpsertTestFile();
+        var original = await CreateTestFile();
         var originalUpdatedAt = original.UpdatedAtUtc;
         await Task.Delay(50);
 
         var updated = new File
         {
-            Id = original.Id,
             FileName = "updated.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", updated);
+        var response = await _client.PutAsJsonAsync($"/files/{original.Id}", updated);
         var result = await response.Content.ReadFromJsonAsync<File>();
 
         // Assert
@@ -135,7 +133,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetById_ExistingFile_ReturnsFile()
     {
         // Arrange
-        var created = await UpsertTestFile();
+        var created = await CreateTestFile();
 
         // Act
         var response = await _client.GetAsync($"/files/{created.Id}");
@@ -175,7 +173,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task List_ReturnsFiles()
     {
         // Arrange
-        await UpsertTestFile(
+        await CreateTestFile(
             new File
             {
                 FileName = "file1.txt",
@@ -183,7 +181,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
                 SizeBytes = 100,
             }
         );
-        await UpsertTestFile(
+        await CreateTestFile(
             new File
             {
                 FileName = "file2.txt",
@@ -206,7 +204,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_ExistingFile_Returns204()
     {
         // Arrange
-        var created = await UpsertTestFile();
+        var created = await CreateTestFile();
 
         // Act
         var response = await _client.DeleteAsync($"/files/{created.Id}");

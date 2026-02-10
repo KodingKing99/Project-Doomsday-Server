@@ -19,7 +19,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task UpsertTestFile(string fileName, string contentType = "text/plain")
+    private async Task CreateTestFile(string fileName, string contentType = "text/plain")
     {
         var record = new File
         {
@@ -48,10 +48,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_WithFiles_ReturnsFileRecords()
     {
-        // Arrange - Upsert 3 files
+        // Arrange - Create 3 files
         for (var i = 1; i <= 3; i++)
         {
-            await UpsertTestFile($"file{i}.txt");
+            await CreateTestFile($"file{i}.txt");
         }
 
         // Act
@@ -67,10 +67,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_Pagination_Skip_Works()
     {
-        // Arrange - Upsert 5 files
+        // Arrange - Create 5 files
         for (var i = 1; i <= 5; i++)
         {
-            await UpsertTestFile($"file{i}.txt");
+            await CreateTestFile($"file{i}.txt");
         }
 
         // Act
@@ -86,10 +86,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_Pagination_Take_Works()
     {
-        // Arrange - Upsert 5 files
+        // Arrange - Create 5 files
         for (var i = 1; i <= 5; i++)
         {
-            await UpsertTestFile($"file{i}.txt");
+            await CreateTestFile($"file{i}.txt");
         }
 
         // Act
@@ -105,10 +105,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_Pagination_TakeClamped_To200Max()
     {
-        // Arrange - Upsert 10 files (simulating larger set)
+        // Arrange - Create 10 files (simulating larger set)
         for (var i = 1; i <= 10; i++)
         {
-            await UpsertTestFile($"file{i}.txt");
+            await CreateTestFile($"file{i}.txt");
         }
 
         // Act - Request 500 but should be clamped to 200
@@ -125,10 +125,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task List_OrderedByUpdatedAtDescending()
     {
-        // Arrange - Upsert files with delays
-        await UpsertTestFile("first.txt");
+        // Arrange - Create files with delays
+        await CreateTestFile("first.txt");
         await Task.Delay(50); // Small delay to ensure different timestamps
-        await UpsertTestFile("second.txt");
+        await CreateTestFile("second.txt");
 
         // Act
         var response = await _client.GetAsync("/files");

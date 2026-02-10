@@ -20,7 +20,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<File> UpsertTestFile(string fileName = "test.txt")
+    private async Task<File> CreateTestFile(string fileName = "test.txt")
     {
         var record = new File
         {
@@ -37,7 +37,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_ExistingFile_Returns204()
     {
         // Arrange
-        var created = await UpsertTestFile();
+        var created = await CreateTestFile();
 
         // Act
         var response = await _client.DeleteAsync($"/files/{created.Id}");
@@ -50,7 +50,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_ExistingFile_RemovesFromStorage()
     {
         // Arrange
-        var created = await UpsertTestFile();
+        var created = await CreateTestFile();
 
         // Act
         await _client.DeleteAsync($"/files/{created.Id}");
@@ -66,7 +66,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_ExistingFile_RemovesFromRepository()
     {
         // Arrange
-        var created = await UpsertTestFile();
+        var created = await CreateTestFile();
 
         // Act
         await _client.DeleteAsync($"/files/{created.Id}");

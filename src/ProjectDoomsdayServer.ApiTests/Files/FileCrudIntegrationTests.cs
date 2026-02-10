@@ -20,7 +20,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public async Task FullCrudFlow_UpsertListGetUpdateDelete_Succeeds()
+    public async Task FullCrudFlow_CreateListGetUpdateDelete_Succeeds()
     {
         // 1. Create file record -> get ID
         var record = new File
@@ -51,16 +51,15 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         fetchedRecord!.FileName.Should().Be("integration-test.txt");
         fetchedRecord.ContentType.Should().Be("text/plain");
 
-        // 4. Update via upsert -> verify change
+        // 4. Update via PUT -> verify change
         var updatedRecord = new File
         {
-            Id = fileId,
             FileName = "integration-test-updated.txt",
             ContentType = "text/plain",
             SizeBytes = 2048,
             Metadata = { ["environment"] = "test", ["version"] = "1.0" },
         };
-        var updateResponse = await _client.PostAsJsonAsync("/files", updatedRecord);
+        var updateResponse = await _client.PutAsJsonAsync($"/files/{fileId}", updatedRecord);
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // Verify update was applied
@@ -83,7 +82,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public async Task UpsertThenDownload_Succeeds()
+    public async Task CreateThenDownload_Succeeds()
     {
         // Arrange - Create file record (client would upload to S3 separately)
         var record = new File
@@ -93,10 +92,10 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
             SizeBytes = 1024,
         };
 
-        // Act - Upsert file record
-        var upsertResponse = await _client.PostAsJsonAsync("/files", record);
-        upsertResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await upsertResponse.Content.ReadFromJsonAsync<File>();
+        // Act - Create file record
+        var createResponse = await _client.PostAsJsonAsync("/files", record);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var result = await createResponse.Content.ReadFromJsonAsync<File>();
         result.Should().NotBeNull();
 
         // Download file (content comes from mocked storage)

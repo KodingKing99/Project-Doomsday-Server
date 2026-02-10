@@ -14,16 +14,26 @@ public sealed class FilesController : ControllerBase
     public FilesController(IFilesService filesService) => _filesService = filesService;
 
     [HttpPost]
-    public async Task<ActionResult<File>> Upsert([FromBody] File record, CancellationToken ct)
+    public async Task<ActionResult<File>> Create([FromBody] File record, CancellationToken ct)
     {
-        var existing = string.IsNullOrEmpty(record.Id)
-            ? null
-            : await _filesService.GetAsync(record.Id, ct);
-        var result = await _filesService.UpsertAsync(record, ct);
+        record.Id = null;
+        var result = await _filesService.CreateAsync(record, ct);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
 
+    [HttpPut("{id}")]
+    public async Task<ActionResult<File>> Update(
+        string id,
+        [FromBody] File record,
+        CancellationToken ct
+    )
+    {
+        var existing = await _filesService.GetAsync(id, ct);
         if (existing is null)
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            return NotFound();
 
+        record.Id = id;
+        var result = await _filesService.UpdateAsync(record, ct);
         return Ok(result);
     }
 

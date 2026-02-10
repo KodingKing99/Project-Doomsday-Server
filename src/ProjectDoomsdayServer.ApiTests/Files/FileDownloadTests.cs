@@ -19,7 +19,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<File> UpsertTestFile(
+    private async Task<File> CreateTestFile(
         string fileName = "test.txt",
         string contentType = "text/plain",
         long sizeBytes = 100
@@ -40,7 +40,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Download_ExistingFile_ReturnsFileStream()
     {
         // Arrange
-        var record = await UpsertTestFile();
+        var record = await CreateTestFile();
 
         // Act
         var response = await _client.GetAsync($"/files/{record.Id}/content");
@@ -53,7 +53,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Download_ExistingFile_HasCorrectContentType()
     {
         // Arrange
-        var record = await UpsertTestFile("document.pdf", "application/pdf");
+        var record = await CreateTestFile("document.pdf", "application/pdf");
 
         // Act
         var response = await _client.GetAsync($"/files/{record.Id}/content");
@@ -67,7 +67,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Download_ExistingFile_HasCorrectFileName()
     {
         // Arrange
-        var record = await UpsertTestFile("report.pdf", "application/pdf");
+        var record = await CreateTestFile("report.pdf", "application/pdf");
 
         // Act
         var response = await _client.GetAsync($"/files/{record.Id}/content");

@@ -22,11 +22,17 @@ public sealed class InMemoryFileRepository : IFileRepository
         return Task.FromResult<IReadOnlyList<File>>(list);
     }
 
-    public Task UpsertAsync(File file, CancellationToken cancellationToken)
+    public Task<File> CreateAsync(File file, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(file.Id))
             file.Id = Guid.NewGuid().ToString("N");
 
+        _db[file.Id] = file;
+        return Task.FromResult(file);
+    }
+
+    public Task UpdateAsync(File file, CancellationToken cancellationToken)
+    {
         _db[file.Id] = file;
         return Task.CompletedTask;
     }

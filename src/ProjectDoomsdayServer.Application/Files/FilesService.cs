@@ -14,10 +14,16 @@ public sealed class FilesService : IFilesService
         _storage = storage;
     }
 
-    public async Task<File> UpsertAsync(File record, CancellationToken cancellationToken)
+    public async Task<File> CreateAsync(File record, CancellationToken cancellationToken)
     {
         record.UpdatedAtUtc = DateTimeOffset.UtcNow;
-        await _repo.UpsertAsync(record, cancellationToken);
+        return await _repo.CreateAsync(record, cancellationToken);
+    }
+
+    public async Task<File> UpdateAsync(File record, CancellationToken cancellationToken)
+    {
+        record.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await _repo.UpdateAsync(record, cancellationToken);
         return record;
     }
 

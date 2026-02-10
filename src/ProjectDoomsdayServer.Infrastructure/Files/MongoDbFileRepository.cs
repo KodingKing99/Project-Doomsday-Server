@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
@@ -47,11 +48,19 @@ public sealed class MongoDbFileRepository : IFileRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task UpsertAsync(File file, CancellationToken cancellationToken)
+    public async Task<File> CreateAsync(File file, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(file.Id))
+            file.Id = ObjectId.GenerateNewId().ToString();
+
+        await _collection.InsertOneAsync(file, cancellationToken: cancellationToken);
+        return file;
+    }
+
+    public async Task UpdateAsync(File file, CancellationToken cancellationToken)
     {
         var filter = Builders<File>.Filter.Eq(f => f.Id, file.Id);
-        var options = new ReplaceOptions { IsUpsert = true };
-        await _collection.ReplaceOneAsync(filter, file, options, cancellationToken);
+        await _collection.ReplaceOneAsync(filter, file, cancellationToken: cancellationToken);
     }
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)

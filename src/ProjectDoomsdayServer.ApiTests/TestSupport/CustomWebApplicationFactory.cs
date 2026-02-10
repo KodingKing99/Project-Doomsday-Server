@@ -114,12 +114,21 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             repoSub
-                .UpsertAsync(Arg.Any<File>(), Arg.Any<CancellationToken>())
+                .CreateAsync(Arg.Any<File>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
                     var record = callInfo.ArgAt<File>(0);
                     if (string.IsNullOrEmpty(record.Id))
                         record.Id = Guid.NewGuid().ToString("N");
+                    FileRecords[record.Id] = record;
+                    return Task.FromResult(record);
+                });
+
+            repoSub
+                .UpdateAsync(Arg.Any<File>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    var record = callInfo.ArgAt<File>(0);
                     FileRecords[record.Id] = record;
                     return Task.CompletedTask;
                 });
