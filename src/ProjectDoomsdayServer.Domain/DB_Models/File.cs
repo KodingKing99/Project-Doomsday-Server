@@ -3,6 +3,8 @@ namespace ProjectDoomsdayServer.Domain.DB_Models;
 public sealed class File
 {
     public string? Id { get; set; }
+    public string? UserId { get; set; }
+    public string? StorageKey { get; set; }
 
     public string FileName { get; set; } = default!;
     public string ContentType { get; set; } = "application/octet-stream";

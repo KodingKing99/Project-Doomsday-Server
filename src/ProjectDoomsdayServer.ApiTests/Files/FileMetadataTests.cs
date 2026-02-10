@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
+using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -29,7 +30,8 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         };
         var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<File>())!;
+        var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+        return result!.File;
     }
 
     [Fact]
@@ -48,12 +50,14 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await response.Content.ReadFromJsonAsync<File>();
-        result.Should().NotBeNull();
-        result!.Id.Should().NotBeNullOrEmpty();
+        var createResult = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+        createResult.Should().NotBeNull();
+        var result = createResult!.File;
+        result.Id.Should().NotBeNullOrEmpty();
         result.FileName.Should().Be("test.txt");
         result.ContentType.Should().Be("text/plain");
         result.SizeBytes.Should().Be(1024);
+        createResult.UploadUrl.Should().NotBeNullOrWhiteSpace();
         response.Headers.Location.Should().NotBeNull();
     }
 
@@ -95,11 +99,12 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync("/files", record);
-        var result = await response.Content.ReadFromJsonAsync<File>();
+        var createResult = await response.Content.ReadFromJsonAsync<CreateFileResult>();
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Metadata.Should().ContainKey("key1");
+        createResult.Should().NotBeNull();
+        var result = createResult!.File;
+        result.Metadata.Should().ContainKey("key1");
         result.Metadata["key1"].Should().Be("value1");
         result.Metadata.Should().ContainKey("key2");
         result.Metadata["key2"].Should().Be("value2");

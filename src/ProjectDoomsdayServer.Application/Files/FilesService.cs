@@ -1,4 +1,3 @@
-using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files;
@@ -14,10 +13,23 @@ public sealed class FilesService : IFilesService
         _storage = storage;
     }
 
-    public async Task<File> CreateAsync(File record, CancellationToken cancellationToken)
+    public async Task<CreateFileResult> CreateAsync(
+        File record,
+        CancellationToken cancellationToken
+    )
     {
         record.UpdatedAtUtc = DateTimeOffset.UtcNow;
-        return await _repo.CreateAsync(record, cancellationToken);
+        var created = await _repo.CreateAsync(record, cancellationToken);
+
+        created.StorageKey = $"{created.UserId}/{created.Id}";
+        await _repo.UpdateAsync(created, cancellationToken);
+
+        var uploadUrl = await _storage.GetPresignedUploadUrlAsync(
+            created.StorageKey,
+            cancellationToken
+        );
+
+        return new CreateFileResult(created, uploadUrl);
     }
 
     public async Task<File> UpdateAsync(File record, CancellationToken cancellationToken)
@@ -38,15 +50,17 @@ public sealed class FilesService : IFilesService
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
-        await _storage.DeleteAsync(id, cancellationToken);
+        var file = await _repo.GetAsync(id, cancellationToken);
+        if (file?.StorageKey is not null)
+            await _storage.DeleteAsync(file.StorageKey, cancellationToken);
         await _repo.DeleteAsync(id, cancellationToken);
     }
 
-    public Task<Stream> DownloadAsync(string id, CancellationToken cancellationToken) =>
-        _storage.OpenReadAsync(id, cancellationToken);
-
-    public Task<string> GetPresignedUploadUrlAsync(
-        string fileName,
-        CancellationToken cancellationToken
-    ) => _storage.GetPresignedUploadUrlAsync(fileName, cancellationToken);
+    public async Task<Stream> DownloadAsync(string id, CancellationToken cancellationToken)
+    {
+        var file = await _repo.GetAsync(id, cancellationToken);
+        if (file?.StorageKey is null)
+            throw new FileNotFoundException($"File {id} not found or has no storage key.");
+        return await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
+    }
 }

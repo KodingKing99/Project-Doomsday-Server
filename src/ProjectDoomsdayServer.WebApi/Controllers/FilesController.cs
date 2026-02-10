@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files;
-using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.WebApi.Controllers;
@@ -14,11 +13,14 @@ public sealed class FilesController : ControllerBase
     public FilesController(IFilesService filesService) => _filesService = filesService;
 
     [HttpPost]
-    public async Task<ActionResult<File>> Create([FromBody] File record, CancellationToken ct)
+    public async Task<ActionResult<CreateFileResult>> Create(
+        [FromBody] File record,
+        CancellationToken ct
+    )
     {
         record.Id = null;
         var result = await _filesService.CreateAsync(record, ct);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.File.Id }, result);
     }
 
     [HttpPut("{id}")]
@@ -64,10 +66,4 @@ public sealed class FilesController : ControllerBase
         await _filesService.DeleteAsync(id, ct);
         return NoContent();
     }
-
-    [HttpGet("presigned-upload-url")]
-    public async Task<ActionResult<string>> GetPresignedUploadUrl(
-        string fileName,
-        CancellationToken ct
-    ) => Ok(await _filesService.GetPresignedUploadUrlAsync(fileName, ct));
 }

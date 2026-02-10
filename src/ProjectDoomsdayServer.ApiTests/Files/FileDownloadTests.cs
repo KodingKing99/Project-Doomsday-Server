@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
+using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -33,7 +34,8 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         };
         var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<File>())!;
+        var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+        return result!.File;
     }
 
     [Fact]

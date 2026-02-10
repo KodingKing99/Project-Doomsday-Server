@@ -1,12 +1,11 @@
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files;
 using Xunit;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -23,60 +22,72 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetPresignedUploadUrl_ReturnsUrl()
+    public async Task Create_ReturnsUploadUrl()
     {
         // Arrange
-        var fileName = "test.txt";
+        var record = new File
+        {
+            FileName = "test.txt",
+            ContentType = "text/plain",
+            SizeBytes = 1024,
+            UserId = "user123",
+        };
 
         // Act
-        var response = await _client.GetAsync(
-            $"/files/presigned-upload-url?fileName={System.Uri.EscapeDataString(fileName)}"
-        );
+        var response = await _client.PostAsJsonAsync("/files", record);
 
         // Assert
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync();
-        body.Should().NotBeNullOrWhiteSpace();
-        body.Should().StartWith("https://");
-
-        // Verify the substitute was called
-        var sub = _factory.FileStorageSubstitute as IFileStorage;
-        Assert.NotNull(sub);
-        // NSubstitute verification: ensure the method was called at least once with the filename
-        await ((IFileStorage)sub!)
-            .Received(1)
-            .GetPresignedUploadUrlAsync(fileName, Arg.Any<System.Threading.CancellationToken>());
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+        result.Should().NotBeNull();
+        result!.File.Should().NotBeNull();
+        result.File.Id.Should().NotBeNullOrEmpty();
+        result.UploadUrl.Should().NotBeNullOrWhiteSpace();
+        result.UploadUrl.Should().StartWith("https://");
     }
 
     [Fact]
-    public async Task GetPresignedUploadUrl_NoFileName_Returns400()
-    {
-        // Arrange - No fileName query parameter
-
-        // Act
-        var response = await _client.GetAsync("/files/presigned-upload-url");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task GetPresignedUploadUrl_UrlContainsFileName()
+    public async Task Create_SetsStorageKey()
     {
         // Arrange
-        var fileName = "document.pdf";
+        var record = new File
+        {
+            FileName = "test.txt",
+            ContentType = "text/plain",
+            SizeBytes = 1024,
+            UserId = "user123",
+        };
 
         // Act
-        var response = await _client.GetAsync(
-            $"/files/presigned-upload-url?fileName={System.Uri.EscapeDataString(fileName)}"
-        );
+        var response = await _client.PostAsJsonAsync("/files", record);
 
         // Assert
         response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+        result.Should().NotBeNull();
+        result!.File.StorageKey.Should().Be($"user123/{result.File.Id}");
+    }
 
-        // Verify the substitute was called with the correct filename
+    [Fact]
+    public async Task Create_PresignedUrlUsesStorageKey()
+    {
+        // Arrange
+        var record = new File
+        {
+            FileName = "document.pdf",
+            ContentType = "application/pdf",
+            SizeBytes = 2048,
+            UserId = "user456",
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/files", record);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+
+        // Assert - Verify presigned URL was requested with the storage key
         await _factory
             .FileStorageSubstitute!.Received(1)
-            .GetPresignedUploadUrlAsync(fileName, Arg.Any<CancellationToken>());
+            .GetPresignedUploadUrlAsync(result!.File.StorageKey!, Arg.Any<CancellationToken>());
     }
 }

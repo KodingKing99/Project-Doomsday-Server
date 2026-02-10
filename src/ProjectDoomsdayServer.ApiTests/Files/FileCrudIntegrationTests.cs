@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
+using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -31,9 +32,11 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         };
         var createResponse = await _client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var createdRecord = await createResponse.Content.ReadFromJsonAsync<File>();
-        createdRecord.Should().NotBeNull();
-        createdRecord!.Id.Should().NotBeNullOrEmpty();
+        var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
+        createResult.Should().NotBeNull();
+        var createdRecord = createResult!.File;
+        createdRecord.Id.Should().NotBeNullOrEmpty();
+        createResult.UploadUrl.Should().NotBeNullOrWhiteSpace();
         var fileId = createdRecord.Id;
 
         // 2. List files -> verify file appears
@@ -95,11 +98,11 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         // Act - Create file record
         var createResponse = await _client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await createResponse.Content.ReadFromJsonAsync<File>();
-        result.Should().NotBeNull();
+        var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
+        createResult.Should().NotBeNull();
 
         // Download file (content comes from mocked storage)
-        var downloadResponse = await _client.GetAsync($"/files/{result!.Id}/content");
+        var downloadResponse = await _client.GetAsync($"/files/{createResult!.File.Id}/content");
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

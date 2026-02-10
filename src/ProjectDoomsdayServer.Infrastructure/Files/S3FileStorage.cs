@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
@@ -18,57 +17,54 @@ public class S3FileStorage : IFileStorage
         _config = config.Value;
     }
 
-    public Task DeleteAsync(string id, CancellationToken ct)
+    public async Task SaveAsync(string key, Stream content, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var request = new PutObjectRequest
+        {
+            BucketName = _config.BucketName,
+            Key = key,
+            InputStream = content,
+        };
+        await _s3Client.PutObjectAsync(request, ct);
     }
 
-    public Task<bool> ExistsAsync(string id, CancellationToken ct)
+    public async Task<Stream> OpenReadAsync(string key, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var response = await _s3Client.GetObjectAsync(_config.BucketName, key, ct);
+        return response.ResponseStream;
     }
 
-    // Generate a presigned PUT URL that a client can use to upload directly to S3.
-    // The generated S3 key is prefixed with a GUID to avoid collisions. If you
-    // want the server to track the generated key, consider returning the key
-    // alongside the URL or accepting an explicit key from the caller.
-    public Task<string> GetPresignedUploadUrlAsync(
-        string fileName,
-        CancellationToken cancellationToken
-    )
+    public async Task DeleteAsync(string key, CancellationToken ct)
     {
-        // Respect cancellation early
-        cancellationToken.ThrowIfCancellationRequested();
+        await _s3Client.DeleteObjectAsync(_config.BucketName, key, ct);
+    }
 
-        var bucketName = _config.BucketName;
+    public async Task<bool> ExistsAsync(string key, CancellationToken ct)
+    {
+        try
+        {
+            await _s3Client.GetObjectMetadataAsync(_config.BucketName, key, ct);
+            return true;
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+    }
 
-        // Use a GUID prefix to avoid name collisions and make the key unique.
-        var key = $"{Guid.NewGuid():N}_{fileName}";
-
-        // Default expiry for the presigned URL. Make configurable via S3Config if desired.
-        var expiry = TimeSpan.FromMinutes(15);
+    public Task<string> GetPresignedUploadUrlAsync(string key, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
 
         var request = new GetPreSignedUrlRequest
         {
-            BucketName = bucketName,
+            BucketName = _config.BucketName,
             Key = key,
             Verb = HttpVerb.PUT,
-            Expires = DateTime.UtcNow.Add(expiry),
-            // Optionally set ContentType or other headers to restrict uploads.
+            Expires = DateTime.UtcNow.AddMinutes(15),
         };
 
         var url = _s3Client.GetPreSignedURL(request);
-
         return Task.FromResult(url);
-    }
-
-    public Task<Stream> OpenReadAsync(string id, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task SaveAsync(string id, Stream content, CancellationToken ct)
-    {
-        throw new NotImplementedException();
     }
 }

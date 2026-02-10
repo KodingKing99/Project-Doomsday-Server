@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
+using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -30,7 +31,8 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         };
         var response = await _client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<File>())!;
+        var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
+        return result!.File;
     }
 
     [Fact]
@@ -55,11 +57,11 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         // Act
         await _client.DeleteAsync($"/files/{created.Id}");
 
-        // Assert
+        // Assert - storage is called with the StorageKey, not the Id
         await _factory
             .FileStorageSubstitute!.Received(1)
-            .DeleteAsync(created.Id, Arg.Any<CancellationToken>());
-        _factory.DeletedFileIds.Should().Contain(created.Id);
+            .DeleteAsync(created.StorageKey!, Arg.Any<CancellationToken>());
+        _factory.DeletedFileIds.Should().Contain(created.StorageKey!);
     }
 
     [Fact]
