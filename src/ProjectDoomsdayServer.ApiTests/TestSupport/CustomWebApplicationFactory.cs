@@ -30,6 +30,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseUrls("http://localhost");
+
         builder.ConfigureTestServices(services =>
         {
             RemoveService<IFileStorage>(services);

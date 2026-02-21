@@ -32,6 +32,7 @@ Dependency flow (outside-in): WebApi → Infrastructure → Application → Doma
 - **Infrastructure** — Adapter implementations. `MongoDbFileRepository`, `S3FileStorage`, `LocalFileStorage`, `InMemoryFileRepository`. DI registration via `AddInfrastructureServices()`.
 - **WebApi** — ASP.NET Core entry point. `Program.cs` is the DI composition root. Controllers call into Application layer services.
 - **ApiTests** — Integration tests using `WebApplicationFactory<Program>`. `CustomWebApplicationFactory` replaces real storage/repository with NSubstitute mocks.
+- **E2ETests** — Full-stack E2E tests using Testcontainers. Spins up real MongoDB and MinIO (S3-compatible) Docker containers. No mocks — exercises the full presigned URL upload workflow.
 
 ## Key Patterns
 
@@ -45,7 +46,19 @@ Dependency flow (outside-in): WebApi → Infrastructure → Application → Doma
 
 ## Test Patterns
 
-Tests use `IClassFixture<CustomWebApplicationFactory>` with NSubstitute mocks for `IFileStorage` and `IFileRepository`. The factory tracks operations via `SavedFiles`, `DeletedFileIds`, and `FileRecords` dictionaries. Call `factory.Reset()` between tests to clear state.
+Two test suites:
+
+**ApiTests** (`src/ProjectDoomsdayServer.ApiTests/`) — Fast, no Docker required.
+- Uses `IClassFixture<CustomWebApplicationFactory>` with NSubstitute mocks for `IFileStorage` and `IFileRepository`.
+- Factory tracks operations via `SavedFiles`, `DeletedFileIds`, and `FileRecords` dictionaries. Call `factory.Reset()` between tests to clear state.
+- Run with: `dotnet test --filter "FullyQualifiedName~ApiTests"`
+
+**E2ETests** (`src/ProjectDoomsdayServer.E2ETests/`) — Full-stack, requires Docker.
+- Uses `ICollectionFixture<E2EInfrastructureFixture>` (shared containers across all test classes) + per-class `E2EWebApplicationFactory`.
+- Testcontainers spins up MongoDB (`mongo:7.0`) and MinIO containers automatically.
+- Test isolation via `UniqueUserId()` — each test uses a unique `{UserId}` prefix; no teardown needed.
+- `_appClient` routes to the in-process server; `_rawHttpClient` hits MinIO directly for presigned URL PUT uploads.
+- Run with: `dotnet test --filter "FullyQualifiedName~E2ETests"`
 
 Assertions use FluentAssertions (`response.StatusCode.Should().Be(HttpStatusCode.OK)`).
 

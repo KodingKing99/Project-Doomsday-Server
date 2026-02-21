@@ -21,19 +21,30 @@ dotnet run --project src/ProjectDoomsdayServer.WebApi/ProjectDoomsdayServer.WebA
 
 ## Test
 
-Run all API tests:
+Run all tests (requires Docker for E2E containers):
 ```bash
-dotnet test src/ProjectDoomsdayServer.ApiTests/ProjectDoomsdayServer.ApiTests.csproj
+dotnet test
+```
+
+Run only mocked integration tests (no Docker required):
+```bash
+dotnet test --filter "FullyQualifiedName~ApiTests"
+```
+
+Run only E2E tests (requires Docker):
+```bash
+dotnet test --filter "FullyQualifiedName~E2ETests"
+```
+
+Run a specific test class or method:
+```bash
+dotnet test --filter "FullyQualifiedName~FileCrudIntegrationTests"
+dotnet test --filter "FullyQualifiedName~FileCrudIntegrationTests.CreateFile_ReturnsCreated"
 ```
 
 Run tests with verbose output:
 ```bash
-dotnet test src/ProjectDoomsdayServer.ApiTests/ProjectDoomsdayServer.ApiTests.csproj --verbosity normal
-```
-
-Run a specific test:
-```bash
-dotnet test src/ProjectDoomsdayServer.ApiTests/ProjectDoomsdayServer.ApiTests.csproj --filter "FullyQualifiedName~TestMethodName"
+dotnet test --verbosity normal
 ```
 
 ## Project Structure
@@ -41,8 +52,9 @@ dotnet test src/ProjectDoomsdayServer.ApiTests/ProjectDoomsdayServer.ApiTests.cs
 - `src/ProjectDoomsdayServer.WebApi` - ASP.NET Core Web API
 - `src/ProjectDoomsdayServer.Application` - Application layer (use cases, interfaces)
 - `src/ProjectDoomsdayServer.Domain` - Domain layer (entities, value objects)
-- `src/ProjectDoomsdayServer.Infrastructure` - Infrastructure layer (external services, S3)
-- `src/ProjectDoomsdayServer.ApiTests` - Integration tests using xUnit, FluentAssertions, NSubstitute
+- `src/ProjectDoomsdayServer.Infrastructure` - Infrastructure layer (MongoDB, S3/MinIO)
+- `src/ProjectDoomsdayServer.ApiTests` - Mocked integration tests using xUnit, FluentAssertions, NSubstitute
+- `src/ProjectDoomsdayServer.E2ETests` - Full-stack E2E tests using Testcontainers (MongoDB + MinIO)
 
 ## Formatting
 

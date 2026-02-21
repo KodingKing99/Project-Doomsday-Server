@@ -5,10 +5,9 @@
 | Attribute | Value |
 |-----------|-------|
 | **Framework** | ASP.NET Core 9.0 (C#) |
-| **Architecture** | Clean/Layered (Domain, Application, Infrastructure, WebApi, ApiTests) |
-| **Blob Storage** | AWS S3 |
-| **Metadata Storage** | MongoDB (driver installed) |
-| **Current Storage** | In-Memory (development) |
+| **Architecture** | Clean/Hexagonal (Domain, Application, Infrastructure, WebApi, ApiTests, E2ETests) |
+| **Blob Storage** | AWS S3 (production) / MinIO via Testcontainers (E2E tests) |
+| **Metadata Storage** | MongoDB |
 | **Authentication** | Amazon Cognito (JWT Bearer) |
 
 ---
@@ -23,13 +22,20 @@ src/
 │       ├── IFileStorage.cs                 # Blob storage abstraction
 │       └── IFileRepository.cs              # Metadata repository abstraction
 ├── ProjectDoomsdayServer.Infrastructure/   # External implementations
-│   └── Storage/
+│   └── Files/
 │       ├── S3FileStorage.cs                # AWS S3 implementation
-│       └── InMemoryFileRepository.cs       # Development repository
+│       ├── LocalFileStorage.cs             # Local filesystem implementation
+│       ├── MongoDbFileRepository.cs        # MongoDB implementation
+│       └── InMemoryFileRepository.cs       # In-memory fallback
 ├── ProjectDoomsdayServer.WebApi/           # API endpoints
 │   └── Files/
 │       └── FilesController.cs              # File CRUD endpoints
-└── ProjectDoomsdayServer.ApiTests/         # Integration tests
+├── ProjectDoomsdayServer.ApiTests/         # Mocked integration tests (NSubstitute, no Docker)
+└── ProjectDoomsdayServer.E2ETests/         # Full-stack E2E tests (Testcontainers, requires Docker)
+    └── Files/
+        ├── PresignedUploadE2ETests.cs      # Presigned URL upload → download round-trip
+        ├── FileCrudE2ETests.cs             # CRUD against real MongoDB + MinIO
+        └── FileDownloadE2ETests.cs         # Download edge cases
 ```
 
 ---
@@ -38,60 +44,31 @@ src/
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| S3 Presigned URLs | ✅ Done | `GetPresignedUploadUrlAsync` implemented |
-| S3 SaveAsync | ❌ Not implemented | Stub only |
-| S3 OpenReadAsync | ❌ Not implemented | Stub only |
-| S3 DeleteAsync | ❌ Not implemented | Stub only |
-| S3 ExistsAsync | ❌ Not implemented | Stub only |
-| MongoDB Repository | ❌ Not implemented | Driver installed, no implementation |
-| Cognito Auth | ⚠️ Configured | Disabled in development |
-| File CRUD Endpoints | ✅ Done | 7 endpoints available |
+| S3 Presigned URLs | ✅ Done | Returned in `POST /files` response |
+| S3 Full Implementation | ✅ Done | Save, OpenRead, Delete, Exists all implemented |
+| MongoDB Repository | ✅ Done | `MongoDbFileRepository` with `StringObjectIdGenerator` |
+| Mocked Integration Tests | ✅ Done | 29 tests in `ApiTests` — no Docker required |
+| E2E Tests | ✅ Done | 12 tests in `E2ETests` — real MongoDB + MinIO via Testcontainers |
+| Cognito Auth | ⚠️ Configured | Disabled in development, toggled via `Authentication:Enabled` |
 | CSV Export | ❌ Not started | - |
 | Query Document API | ❌ Not started | - |
 
-### File CRUD Endpoints (7 total)
+### File CRUD Endpoints
 
-1. `GET /files/presigned-upload-url?fileName={name}` - Get presigned S3 upload URL
-2. `POST /files` - Upload file (multipart/form-data)
-3. `GET /files` - List files with pagination
-4. `GET /files/{id}` - Get file metadata
-5. `GET /files/{id}/download` - Download file content
-6. `PATCH /files/{id}/metadata` - Update file metadata
-7. `DELETE /files/{id}` - Delete file
+1. `POST /files` — Create file metadata, returns presigned S3 PUT URL for direct client upload
+2. `PUT /files/{id}` — Update file metadata
+3. `GET /files` — List files with pagination (`?skip=0&take=50`, max 200, sorted by `UpdatedAtUtc` desc)
+4. `GET /files/{id}` — Get file metadata
+5. `GET /files/{id}/content` — Download file content
+6. `DELETE /files/{id}` — Delete file and storage object
 
 ---
 
 ## Roadmap
 
-### Phase 1: Complete S3 Integration
+### ~~Phase 1: Complete S3 Integration~~ ✅ Done
 
-**Goal:** Full AWS S3 blob storage functionality
-
-| Task | Interface Method | Description |
-|------|-----------------|-------------|
-| 1.1 | `SaveAsync(Guid id, Stream content, CancellationToken ct)` | Upload file content to S3 bucket |
-| 1.2 | `OpenReadAsync(Guid id, CancellationToken ct)` | Stream file content from S3 |
-| 1.3 | `DeleteAsync(Guid id, CancellationToken ct)` | Remove file from S3 bucket |
-| 1.4 | `ExistsAsync(Guid id, CancellationToken ct)` | Check if file exists in S3 |
-
-**Dependencies:** AWS SDK configured, S3 bucket created
-
----
-
-### Phase 2: MongoDB Repository
-
-**Goal:** Persistent file metadata storage
-
-| Task | Description |
-|------|-------------|
-| 2.1 | Create `MongoFileRepository` implementing `IFileRepository` |
-| 2.2 | Configure MongoDB connection string and database |
-| 2.3 | Create indexes for common queries (by user, by date) |
-| 2.4 | Replace `InMemoryFileRepository` DI registration |
-
-**Dependencies:** MongoDB instance available
-
----
+### ~~Phase 2: MongoDB Repository~~ ✅ Done
 
 ### Phase 3: Authentication
 
@@ -138,6 +115,9 @@ src/
 
 - [ ] **Cognito Authentication** - JWT Bearer auth with Amazon Cognito
 - [x] **File CRUD** - Upload, list, get, update metadata, download, delete
+- [x] **S3 Storage** - Full presigned URL workflow + read/delete/exists
+- [x] **MongoDB** - Persistent metadata with `MongoDbFileRepository`
+- [x] **E2E Test Coverage** - Real infrastructure validation via Testcontainers
 - [ ] **Query Document API** - Third-party document query integration
 - [ ] **CSV Export** - Receipt data export functionality
 
@@ -163,8 +143,8 @@ COGNITO_CLIENT_ID=xxxxx
 
 ### Development vs Production
 
-| Setting | Development | Production |
-|---------|-------------|------------|
-| File Storage | In-Memory | S3 |
-| Metadata Storage | In-Memory | MongoDB |
-| Authentication | Disabled | Cognito JWT |
+| Setting | Development | E2E Tests | Production |
+|---------|-------------|-----------|------------|
+| File Storage | S3 (local profile) | MinIO (Testcontainers) | S3 |
+| Metadata Storage | MongoDB (localhost) | MongoDB (Testcontainers) | MongoDB |
+| Authentication | Disabled | Disabled | Cognito JWT |
