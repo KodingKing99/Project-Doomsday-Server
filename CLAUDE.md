@@ -62,6 +62,18 @@ Two test suites:
 
 Assertions use FluentAssertions (`response.StatusCode.Should().Be(HttpStatusCode.OK)`).
 
+## Infrastructure (CDK)
+
+AWS infrastructure is managed with CDK in `infra/` (TypeScript). The deployed stack is `DoomsdayStack` in `us-west-2` (account `027903755990`).
+
+```bash
+cd infra
+cdk diff # preview changes
+cdk deploy # deploy
+```
+
+Currently provisions: Cognito User Pool (`us-west-2_Pfa1G9Ad3`) and App Client. Stack outputs are wired into `appsettings.Development.json`.
+
 ## Configuration
 
 Development config is in `appsettings.Development.json`:

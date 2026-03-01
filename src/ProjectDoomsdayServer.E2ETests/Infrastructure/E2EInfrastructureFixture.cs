@@ -9,9 +9,7 @@ namespace ProjectDoomsdayServer.E2ETests.Infrastructure;
 public sealed class E2EInfrastructureFixture : IAsyncLifetime
 {
 #pragma warning disable CS0618 // obsolete parameterless constructors — image overridden via WithImage
-    private readonly MongoDbContainer _mongo = new MongoDbBuilder()
-        .WithImage("mongo:7.0")
-        .Build();
+    private readonly MongoDbContainer _mongo = new MongoDbBuilder().WithImage("mongo:7.0").Build();
 
     private readonly MinioContainer _minio = new MinioBuilder().Build();
 #pragma warning restore CS0618

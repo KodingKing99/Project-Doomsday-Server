@@ -58,9 +58,10 @@ public class S3FileStorage : IFileStorage
 
         // Use HTTP for presigned URLs when the service endpoint is HTTP (e.g. MinIO in tests).
         // The SDK otherwise defaults to HTTPS regardless of the ServiceURL scheme.
-        var protocol = _s3Client.Config.ServiceURL?.StartsWith("http://") == true
-            ? Protocol.HTTP
-            : Protocol.HTTPS;
+        var protocol =
+            _s3Client.Config.ServiceURL?.StartsWith("http://") == true
+                ? Protocol.HTTP
+                : Protocol.HTTPS;
 
         var request = new GetPreSignedUrlRequest
         {
