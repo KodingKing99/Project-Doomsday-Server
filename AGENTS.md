@@ -19,33 +19,41 @@ Run the WebApi server:
 dotnet run --project src/ProjectDoomsdayServer.WebApi/ProjectDoomsdayServer.WebApi.csproj
 ```
 
-## Test
+## Validation 
 
-Run all tests (requires Docker for E2E containers):
+Run these after implementing changes:
+
+**Default — failures and summary only (use this first):**
 ```bash
-dotnet test
+dotnet test --verbosity minimal 2>&1 | head -n 150
 ```
 
-Run only mocked integration tests (no Docker required):
+**Mocked integration tests only (no Docker required):**
 ```bash
-dotnet test --filter "FullyQualifiedName~ApiTests"
+dotnet test --filter "FullyQualifiedName~ApiTests" --verbosity minimal 2>&1 | head -n 150
 ```
 
-Run only E2E tests (requires Docker):
+**E2E tests only (requires Docker):**
 ```bash
-dotnet test --filter "FullyQualifiedName~E2ETests"
+dotnet test --filter "FullyQualifiedName~E2ETests" --verbosity minimal 2>&1 | head -n 150
 ```
 
-Run a specific test class or method:
+**Specific test class or method:**
 ```bash
-dotnet test --filter "FullyQualifiedName~FileCrudIntegrationTests"
-dotnet test --filter "FullyQualifiedName~FileCrudIntegrationTests.CreateFile_ReturnsCreated"
+dotnet test --filter "FullyQualifiedName~FileCrudIntegrationTests" --verbosity minimal 2>&1 | head -n 100
+dotnet test --filter "FullyQualifiedName~FileCrudIntegrationTests.CreateFile_ReturnsCreated" --verbosity minimal 2>&1 | head -n 100
 ```
 
-Run tests with verbose output:
+**If failures need more context (stack traces, 20 lines after each failure):**
 ```bash
-dotnet test --verbosity normal
+dotnet test 2>&1 | grep -A 20 "Failed\|Error\|Exception" | head -n 200
 ```
+
+**Full output (only if above are insufficient):**
+```bash
+dotnet test --verbosity normal 2>&1
+```
+- format/lint: dotnet csharpier format .
 
 ## Project Structure
 
@@ -55,10 +63,3 @@ dotnet test --verbosity normal
 - `src/ProjectDoomsdayServer.Infrastructure` - Infrastructure layer (MongoDB, S3/MinIO)
 - `src/ProjectDoomsdayServer.ApiTests` - Mocked integration tests using xUnit, FluentAssertions, NSubstitute
 - `src/ProjectDoomsdayServer.E2ETests` - Full-stack E2E tests using Testcontainers (MongoDB + MinIO)
-
-## Formatting
-
-Format code with CSharpier:
-```bash
-dotnet csharpier format .
-```
