@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using ProjectDoomsdayServer.Domain.Configuration;
+using ProjectDoomsdayServer.TestSupport;
 
 namespace ProjectDoomsdayServer.E2ETests.Infrastructure;
 
@@ -18,6 +19,8 @@ public sealed class E2EWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureTestServices(services =>
         {
+            services.AddTestAuthentication();
+
             // 1. Replace IAmazonS3 with MinIO-pointing client
             RemoveAllDescriptors<IAmazonS3>(services);
             services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
@@ -44,7 +47,7 @@ public sealed class E2EWebApplicationFactory : WebApplicationFactory<Program>
             services.PostConfigure<MongoDbConfig>(cfg => cfg.DatabaseName = "e2e-tests");
         });
 
-        builder.UseSetting("Authentication:Enabled", "false");
+        builder.UseSetting("Authentication:Enabled", "true");
     }
 
     private static void RemoveAllDescriptors<T>(IServiceCollection services)

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.WebApi.Controllers;
@@ -17,13 +18,16 @@ public sealed class FilesController : ControllerBase
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<CreateFileResult>> Create(
-        [FromBody] File record,
+        [FromBody] CreateFileInput record,
         CancellationToken ct
     )
     {
         var userId = User.FindFirstValue("sub");
-        record.Id = null;
-        var result = await _filesService.CreateAsync(record, ct);
+        if (userId is null)
+        {
+            return BadRequest("User not found");
+        }
+        var result = await _filesService.CreateAsync(record, userId, ct);
         return CreatedAtAction(nameof(Create), new { id = result.File.Id }, result);
     }
 

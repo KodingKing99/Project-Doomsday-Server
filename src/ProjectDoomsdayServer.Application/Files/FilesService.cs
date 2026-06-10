@@ -1,3 +1,4 @@
+using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files;
@@ -14,11 +15,23 @@ public sealed class FilesService : IFilesService
     }
 
     public async Task<CreateFileResult> CreateAsync(
-        File record,
+        CreateFileInput input,
+        string userId,
         CancellationToken cancellationToken
     )
     {
-        record.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        var now = DateTime.UtcNow;
+        var record = new File()
+        {
+            CreatedAtUtc = now,
+            Metadata = input.Metadata,
+            ContentType = input.ContentType,
+            FileName = input.FileName,
+            HashSha256 = input.HashSha256,
+            SizeBytes = input.SizeBytes,
+            UpdatedAtUtc = now,
+            UserId = userId,
+        };
         var created = await _repo.CreateAsync(record, cancellationToken);
 
         created.StorageKey = $"{created.UserId}/{created.Id}";

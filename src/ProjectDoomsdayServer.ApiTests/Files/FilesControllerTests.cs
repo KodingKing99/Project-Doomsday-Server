@@ -4,8 +4,9 @@ using FluentAssertions;
 using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Domain.Models.Input;
+using ProjectDoomsdayServer.TestSupport;
 using Xunit;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -25,12 +26,11 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Create_ReturnsUploadUrl()
     {
         // Arrange
-        var record = new File
+        var record = new CreateFileInput
         {
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 1024,
-            UserId = "user123",
         };
 
         // Act
@@ -50,16 +50,16 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Create_SetsStorageKey()
     {
         // Arrange
-        var record = new File
+        var record = new CreateFileInput
         {
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 1024,
-            UserId = "user123",
         };
+        var client = _factory.CreateClientAs("user123");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await client.PostAsJsonAsync("/files", record);
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -72,16 +72,16 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Create_PresignedUrlUsesStorageKey()
     {
         // Arrange
-        var record = new File
+        var record = new CreateFileInput
         {
             FileName = "document.pdf",
             ContentType = "application/pdf",
             SizeBytes = 2048,
-            UserId = "user456",
         };
+        var client = _factory.CreateClientAs("user456");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await client.PostAsJsonAsync("/files", record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
 

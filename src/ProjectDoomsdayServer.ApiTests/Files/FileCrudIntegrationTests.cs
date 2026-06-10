@@ -4,6 +4,7 @@ using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.DB_Models;
+using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
@@ -24,7 +25,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     public async Task FullCrudFlow_CreateListGetUpdateDelete_Succeeds()
     {
         // 1. Create file record -> get ID
-        var record = new File
+        var record = new CreateFileInput
         {
             FileName = "integration-test.txt",
             ContentType = "text/plain",
@@ -88,7 +89,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     public async Task CreateThenDownload_Succeeds()
     {
         // Arrange - Create file record (client would upload to S3 separately)
-        var record = new File
+        var record = new CreateFileInput
         {
             FileName = "binary-test.bin",
             ContentType = "application/octet-stream",

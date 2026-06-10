@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Domain.DB_Models;
+using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
@@ -21,7 +22,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 
     private async Task CreateTestFile(string fileName, string contentType = "text/plain")
     {
-        var record = new File
+        var record = new CreateFileInput
         {
             FileName = fileName,
             ContentType = contentType,

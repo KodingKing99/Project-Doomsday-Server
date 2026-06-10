@@ -1,10 +1,15 @@
+using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files;
 
 public interface IFilesService
 {
-    Task<CreateFileResult> CreateAsync(File record, CancellationToken cancellationToken);
+    Task<CreateFileResult> CreateAsync(
+        CreateFileInput input,
+        string userId,
+        CancellationToken cancellationToken
+    );
     Task<File> UpdateAsync(File record, CancellationToken cancellationToken);
     Task<File?> GetAsync(string id, CancellationToken cancellationToken);
     Task<IReadOnlyList<File>> ListAsync(int skip, int take, CancellationToken cancellationToken);

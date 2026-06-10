@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using Amazon.S3;
 using FluentAssertions;
 using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.E2ETests.Infrastructure;
+using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.E2ETests.Files;
@@ -36,15 +38,15 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Create_PersistedToMongoDB_GetReturnsRecord()
     {
         var userId = E2ETestHelpers.UniqueUserId();
-        var record = new File
+        var record = new CreateFileInput
         {
-            UserId = userId,
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
         };
+        var client = _factory.CreateClientAs(userId);
 
-        var createResponse = await _appClient.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
@@ -62,15 +64,15 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Create_StorageKeyFormat_IsUserIdSlashFileId()
     {
         var userId = E2ETestHelpers.UniqueUserId();
-        var record = new File
+        var record = new CreateFileInput
         {
-            UserId = userId,
             FileName = "key-test.txt",
             ContentType = "text/plain",
             SizeBytes = 10,
         };
+        var client = _factory.CreateClientAs(userId);
 
-        var createResponse = await _appClient.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var file = createResult!.File;
@@ -82,15 +84,15 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Create_UploadUrl_StartsWithHttpScheme()
     {
         var userId = E2ETestHelpers.UniqueUserId();
-        var record = new File
+        var record = new CreateFileInput
         {
-            UserId = userId,
             FileName = "url-test.txt",
             ContentType = "text/plain",
             SizeBytes = 10,
         };
+        var client = _factory.CreateClientAs(userId);
 
-        var createResponse = await _appClient.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
 
@@ -101,15 +103,15 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Update_ChangesFieldsInMongoDB()
     {
         var userId = E2ETestHelpers.UniqueUserId();
-        var record = new File
+        var record = new CreateFileInput
         {
-            UserId = userId,
             FileName = "original.txt",
             ContentType = "text/plain",
             SizeBytes = 50,
         };
+        var client = _factory.CreateClientAs(userId);
 
-        var createResponse = await _appClient.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/files", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
 
@@ -135,16 +137,16 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     {
         var userId = E2ETestHelpers.UniqueUserId();
         var content = E2ETestHelpers.Utf8Bytes("delete me");
-        var record = new File
+        var record = new CreateFileInput
         {
-            UserId = userId,
             FileName = "to-delete.txt",
             ContentType = "text/plain",
             SizeBytes = content.Length,
         };
+        var client = _factory.CreateClientAs(userId);
 
         // Create and upload
-        var createResponse = await _appClient.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/files", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
         var uploadUrl = createResult.UploadUrl;
@@ -174,18 +176,18 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task List_ReturnsNewestFirst_PaginationWorks()
     {
         var userId = E2ETestHelpers.UniqueUserId();
+        var client = _factory.CreateClientAs(userId);
 
         // Create 3 files sequentially with small delays to ensure distinct timestamps
         for (var i = 1; i <= 3; i++)
         {
-            var r = new File
+            var r = new CreateFileInput
             {
-                UserId = userId,
                 FileName = $"file{i}.txt",
                 ContentType = "text/plain",
                 SizeBytes = i * 100,
             };
-            var resp = await _appClient.PostAsJsonAsync("/files", r);
+            var resp = await client.PostAsJsonAsync("/files", r);
             resp.StatusCode.Should().Be(HttpStatusCode.Created);
             await Task.Delay(25);
         }

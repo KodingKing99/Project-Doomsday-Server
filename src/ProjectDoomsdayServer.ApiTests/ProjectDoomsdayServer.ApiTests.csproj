@@ -22,5 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ProjectDoomsdayServer.WebApi\ProjectDoomsdayServer.WebApi.csproj" />
+    <ProjectReference Include="..\ProjectDoomsdayServer.TestSupport\ProjectDoomsdayServer.TestSupport.csproj" />
   </ItemGroup>
 </Project>
