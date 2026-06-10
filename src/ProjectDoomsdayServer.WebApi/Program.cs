@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Domain.Configuration;
@@ -74,6 +76,39 @@ if (authEnabled)
             o.Authority = builder.Configuration["Authentication:Cognito:Authority"];
             o.Audience = builder.Configuration["Authentication:Cognito:Audience"];
             o.RequireHttpsMetadata = true;
+            o.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = false, // Access tokens don't validate the audience, that's a frontend concern
+                ValidateLifetime = true,
+                // Cognito puts user ID in "sub"
+                NameClaimType = "sub",
+            };
+            o.MapInboundClaims = false;
+            var expectedClientId = builder.Configuration["Authentication:Cognito:Audience"];
+
+            o.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    var tokenUse = context.Principal?.FindFirstValue("token_use");
+                    if (tokenUse != "access")
+                    {
+                        context.Fail("Only access tokens are accepted.");
+                        return Task.CompletedTask;
+                    }
+
+                    var clientId = context.Principal?.FindFirstValue("client_id");
+                    if (clientId != expectedClientId)
+                    {
+                        context.Fail("Token was not issued for this app client.");
+                        return Task.CompletedTask;
+                    }
+
+                    return Task.CompletedTask;
+                },
+            };
         });
 }
 

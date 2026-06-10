@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
@@ -13,14 +15,16 @@ public sealed class FilesController : ControllerBase
     public FilesController(IFilesService filesService) => _filesService = filesService;
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<CreateFileResult>> Create(
         [FromBody] File record,
         CancellationToken ct
     )
     {
+        var userId = User.FindFirstValue("sub");
         record.Id = null;
         var result = await _filesService.CreateAsync(record, ct);
-        return CreatedAtAction(nameof(GetById), new { id = result.File.Id }, result);
+        return CreatedAtAction(nameof(Create), new { id = result.File.Id }, result);
     }
 
     [HttpPut("{id}")]
@@ -40,11 +44,16 @@ public sealed class FilesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IReadOnlyList<File>>> List(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50,
         CancellationToken ct = default
-    ) => Ok(await _filesService.ListAsync(skip, Math.Clamp(take, 1, 200), ct));
+    )
+    {
+        var userId = User.FindFirstValue("sub");
+        return Ok(await _filesService.ListAsync(skip, Math.Clamp(take, 1, 200), ct));
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<File>> GetById(string id, CancellationToken ct) =>
