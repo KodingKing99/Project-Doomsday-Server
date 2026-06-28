@@ -12,7 +12,10 @@ public interface IFilesService
     );
     Task<File> UpdateAsync(File record, CancellationToken cancellationToken);
     Task<File?> GetAsync(string id, CancellationToken cancellationToken);
-    Task<IReadOnlyList<File>> ListAsync(int skip, int take, CancellationToken cancellationToken);
+    Task<IReadOnlyList<File>> ListAsync(
+        ListFileRequest request,
+        CancellationToken cancellationToken
+    );
     Task DeleteAsync(string id, CancellationToken cancellationToken);
     Task<Stream> DownloadAsync(string id, CancellationToken cancellationToken);
 }

@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
 using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Domain.Configuration;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -35,16 +36,17 @@ public sealed class MongoDbFileRepository : IFileRepository
     }
 
     public async Task<IReadOnlyList<File>> ListAsync(
-        int skip,
-        int take,
+        ListFileRequest request,
         CancellationToken cancellationToken
     )
     {
+        // We will probably filter by a team or orgs user id, but this works for now
+        var filter = Builders<File>.Filter.Eq(f => f.UserId, request.AuthenticatedUserId);
         return await _collection
             .Find(FilterDefinition<File>.Empty)
             .SortByDescending(f => f.UpdatedAtUtc)
-            .Skip(skip)
-            .Limit(take)
+            .Skip(request.Skip)
+            .Limit(request.Take)
             .ToListAsync(cancellationToken);
     }
 

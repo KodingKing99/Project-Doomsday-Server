@@ -19,7 +19,7 @@ public sealed class FilesController : ControllerBase
     [Authorize]
     public async Task<ActionResult<CreateFileResult>> Create(
         [FromBody] CreateFileInput record,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
         var userId = User.FindFirstValue("sub");
@@ -27,23 +27,24 @@ public sealed class FilesController : ControllerBase
         {
             return BadRequest("User not found");
         }
-        var result = await _filesService.CreateAsync(record, userId, ct);
+        var result = await _filesService.CreateAsync(record, userId, cancellationToken);
         return CreatedAtAction(nameof(Create), new { id = result.File.Id }, result);
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<ActionResult<File>> Update(
         string id,
         [FromBody] File record,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
-        var existing = await _filesService.GetAsync(id, ct);
+        var existing = await _filesService.GetAsync(id, cancellationToken);
         if (existing is null)
             return NotFound();
 
         record.Id = id;
-        var result = await _filesService.UpdateAsync(record, ct);
+        var result = await _filesService.UpdateAsync(record, cancellationToken);
         return Ok(result);
     }
 
@@ -52,31 +53,60 @@ public sealed class FilesController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<File>>> List(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     )
     {
         var userId = User.FindFirstValue("sub");
-        return Ok(await _filesService.ListAsync(skip, Math.Clamp(take, 1, 200), ct));
+        if (userId is null)
+        {
+            return BadRequest("User must be authenticated");
+        }
+        take = Math.Clamp(take, 1, 200);
+        return Ok(
+            await _filesService.ListAsync(
+                new ListFileRequest
+                {
+                    AuthenticatedUserId = userId,
+                    Take = take,
+                    Skip = skip,
+                },
+                cancellationToken
+            )
+        );
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<File>> GetById(string id, CancellationToken ct) =>
-        (await _filesService.GetAsync(id, ct)) is { } rec ? Ok(rec) : NotFound();
+    [Authorize]
+    public async Task<ActionResult<File>> GetById(string id, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue("sub");
+        if (userId is null)
+        {
+            return BadRequest("User must be authenticated");
+        }
+        var file = await _filesService.GetAsync(id, cancellationToken);
+        if (file is null)
+        {
+            return NotFound();
+        }
+        return file;
+    }
 
     [HttpGet("{id}/content")]
-    public async Task<IActionResult> Download(string id, CancellationToken ct)
+    public async Task<IActionResult> Download(string id, CancellationToken cancellationToken)
     {
-        var rec = await _filesService.GetAsync(id, ct);
+        var rec = await _filesService.GetAsync(id, cancellationToken);
         if (rec is null)
             return NotFound();
-        var stream = await _filesService.DownloadAsync(id, ct);
+        var stream = await _filesService.DownloadAsync(id, cancellationToken);
         return File(stream, rec.ContentType, rec.FileName);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id, CancellationToken ct)
+    [Authorize]
+    public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
-        await _filesService.DeleteAsync(id, ct);
+        await _filesService.DeleteAsync(id, cancellationToken);
         return NoContent();
     }
 }

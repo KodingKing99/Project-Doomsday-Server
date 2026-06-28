@@ -1,3 +1,4 @@
+using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -56,10 +57,9 @@ public sealed class FilesService : IFilesService
         _repo.GetAsync(id, cancellationToken);
 
     public Task<IReadOnlyList<File>> ListAsync(
-        int skip,
-        int take,
+        ListFileRequest request,
         CancellationToken cancellationToken
-    ) => _repo.ListAsync(skip, take, cancellationToken);
+    ) => _repo.ListAsync(request, cancellationToken);
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
