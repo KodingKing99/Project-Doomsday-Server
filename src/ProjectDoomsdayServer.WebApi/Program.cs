@@ -8,6 +8,7 @@ using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Domain.Configuration;
 using ProjectDoomsdayServer.Infrastructure;
 using ProjectDoomsdayServer.Infrastructure.Files;
+using ProjectDoomsdayServer.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,9 @@ builder.Services.AddInfrastructureServices();
 
 // To use S3FileStorage instead of LocalFileStorage, swap the following:
 // builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
+
+builder.Services.AddExceptionHandler<FileNotFoundExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -122,6 +126,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 

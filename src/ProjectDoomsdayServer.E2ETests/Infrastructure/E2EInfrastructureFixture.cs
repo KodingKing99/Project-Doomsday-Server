@@ -1,20 +1,24 @@
 using Amazon.S3;
 using Amazon.S3.Model;
-using DotNet.Testcontainers.Builders;
+using MongoDB.Driver;
 using Testcontainers.Minio;
-using Testcontainers.MongoDb;
+using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.E2ETests.Infrastructure;
 
 public sealed class E2EInfrastructureFixture : IAsyncLifetime
 {
-#pragma warning disable CS0618 // obsolete parameterless constructors — image overridden via WithImage
-    private readonly MongoDbContainer _mongo = new MongoDbBuilder().WithImage("mongo:7.0").Build();
+    private const string DefaultMongoConnectionString = "mongodb://localhost:27017";
+    private const string MongoConnectionStringEnvVar = "E2E_MONGO_CONNECTION_STRING";
 
+#pragma warning disable CS0618 // obsolete parameterless constructors — image overridden via WithImage
     private readonly MinioContainer _minio = new MinioBuilder().Build();
 #pragma warning restore CS0618
 
+    private MongoClient _mongoClient = default!;
+
     public string MongoConnectionString { get; private set; } = default!;
+    public string DatabaseName { get; } = $"e2e-tests-{Guid.NewGuid():N}";
     public string MinioEndpoint { get; private set; } = default!;
     public string MinioAccessKey { get; private set; } = default!;
     public string MinioSecretKey { get; private set; } = default!;
@@ -22,9 +26,14 @@ public sealed class E2EInfrastructureFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        await Task.WhenAll(_mongo.StartAsync(), _minio.StartAsync());
+        MongoConnectionString =
+            Environment.GetEnvironmentVariable(MongoConnectionStringEnvVar)
+            ?? DefaultMongoConnectionString;
 
-        MongoConnectionString = _mongo.GetConnectionString();
+        _mongoClient = new MongoClient(MongoConnectionString);
+
+        await _minio.StartAsync();
+
         MinioEndpoint = _minio.GetConnectionString();
         MinioAccessKey = _minio.GetAccessKey();
         MinioSecretKey = _minio.GetSecretKey();
@@ -33,8 +42,21 @@ public sealed class E2EInfrastructureFixture : IAsyncLifetime
         await s3.PutBucketAsync(new PutBucketRequest { BucketName = BucketName });
     }
 
-    public async Task DisposeAsync() =>
-        await Task.WhenAll(_mongo.DisposeAsync().AsTask(), _minio.DisposeAsync().AsTask());
+    public async Task DisposeAsync()
+    {
+        await _mongoClient.DropDatabaseAsync(DatabaseName);
+        await _minio.DisposeAsync();
+    }
+
+    /// <summary>
+    /// Inserts the given file records into the per-run database's "files" collection.
+    /// Call this from test setup before the first request to pre-populate data.
+    /// </summary>
+    public async Task SeedFilesAsync(IEnumerable<File> files)
+    {
+        var collection = _mongoClient.GetDatabase(DatabaseName).GetCollection<File>("files");
+        await collection.InsertManyAsync(files);
+    }
 
     public AmazonS3Client BuildS3Client() =>
         new AmazonS3Client(

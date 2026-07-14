@@ -15,7 +15,6 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
 {
     private readonly E2EInfrastructureFixture _infra;
     private E2EWebApplicationFactory _factory = default!;
-    private HttpClient _appClient = default!;
     private readonly HttpClient _rawHttpClient = new();
 
     public FileCrudE2ETests(E2EInfrastructureFixture infra) => _infra = infra;
@@ -23,13 +22,11 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public Task InitializeAsync()
     {
         _factory = new E2EWebApplicationFactory(_infra);
-        _appClient = _factory.CreateClient();
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        _appClient.Dispose();
         _rawHttpClient.Dispose();
         await _factory.DisposeAsync();
     }
@@ -38,13 +35,13 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Create_PersistedToMongoDB_GetReturnsRecord()
     {
         var userId = E2ETestHelpers.UniqueUserId();
+        var client = _factory.CreateClientAs(userId);
         var record = new CreateFileInput
         {
             FileName = "test.txt",
             ContentType = "text/plain",
             SizeBytes = 100,
         };
-        var client = _factory.CreateClientAs(userId);
 
         var createResponse = await client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -52,7 +49,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
         createResult.Should().NotBeNull();
         var fileId = createResult!.File.Id;
 
-        var getResponse = await _appClient.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/files/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched.Should().NotBeNull();
@@ -64,13 +61,13 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Create_StorageKeyFormat_IsUserIdSlashFileId()
     {
         var userId = E2ETestHelpers.UniqueUserId();
+        var client = _factory.CreateClientAs(userId);
         var record = new CreateFileInput
         {
             FileName = "key-test.txt",
             ContentType = "text/plain",
             SizeBytes = 10,
         };
-        var client = _factory.CreateClientAs(userId);
 
         var createResponse = await client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -84,13 +81,13 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Create_UploadUrl_StartsWithHttpScheme()
     {
         var userId = E2ETestHelpers.UniqueUserId();
+        var client = _factory.CreateClientAs(userId);
         var record = new CreateFileInput
         {
             FileName = "url-test.txt",
             ContentType = "text/plain",
             SizeBytes = 10,
         };
-        var client = _factory.CreateClientAs(userId);
 
         var createResponse = await client.PostAsJsonAsync("/files", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -103,13 +100,13 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Update_ChangesFieldsInMongoDB()
     {
         var userId = E2ETestHelpers.UniqueUserId();
+        var client = _factory.CreateClientAs(userId);
         var record = new CreateFileInput
         {
             FileName = "original.txt",
             ContentType = "text/plain",
             SizeBytes = 50,
         };
-        var client = _factory.CreateClientAs(userId);
 
         var createResponse = await client.PostAsJsonAsync("/files", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
@@ -122,10 +119,10 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             ContentType = "text/html",
             SizeBytes = 100,
         };
-        var updateResponse = await _appClient.PutAsJsonAsync($"/files/{fileId}", updatedRecord);
+        var updateResponse = await client.PutAsJsonAsync($"/files/{fileId}", updatedRecord);
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var getResponse = await _appClient.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/files/{fileId}");
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched!.FileName.Should().Be("updated.txt");
         fetched.ContentType.Should().Be("text/html");
@@ -136,6 +133,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
     public async Task Delete_RemovesRecordFromMongoDB_AndObjectFromMinIO()
     {
         var userId = E2ETestHelpers.UniqueUserId();
+        var client = _factory.CreateClientAs(userId);
         var content = E2ETestHelpers.Utf8Bytes("delete me");
         var record = new CreateFileInput
         {
@@ -143,7 +141,6 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             ContentType = "text/plain",
             SizeBytes = content.Length,
         };
-        var client = _factory.CreateClientAs(userId);
 
         // Create and upload
         var createResponse = await client.PostAsJsonAsync("/files", record);
@@ -156,11 +153,11 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
         await _rawHttpClient.PutAsync(uploadUrl, putContent);
 
         // Delete via API
-        var deleteResponse = await _appClient.DeleteAsync($"/files/{fileId}");
+        var deleteResponse = await client.DeleteAsync($"/files/{fileId}");
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // MongoDB record is gone
-        var getResponse = await _appClient.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/files/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
         // MinIO object is gone
@@ -192,20 +189,19 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             await Task.Delay(25);
         }
 
-        // List all and filter client-side by our unique userId
-        var listResponse = await _appClient.GetAsync("/files?skip=0&take=200");
+        // List all — the API returns only this user's files
+        var listResponse = await client.GetAsync("/files?skip=0&take=200");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var all = await listResponse.Content.ReadFromJsonAsync<List<File>>();
-        var myFiles = all!.Where(f => f.UserId == userId).ToList();
+        var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
 
-        myFiles.Should().HaveCount(3);
+        files.Should().HaveCount(3);
 
         // Newest-first: file3 > file2 > file1
-        myFiles[0].UpdatedAtUtc.Should().BeOnOrAfter(myFiles[1].UpdatedAtUtc);
-        myFiles[1].UpdatedAtUtc.Should().BeOnOrAfter(myFiles[2].UpdatedAtUtc);
+        files![0].UpdatedAtUtc.Should().BeOnOrAfter(files[1].UpdatedAtUtc);
+        files[1].UpdatedAtUtc.Should().BeOnOrAfter(files[2].UpdatedAtUtc);
 
-        // Pagination: skip=1 take=1 returns exactly 1 item from the global list
-        var pageResponse = await _appClient.GetAsync("/files?skip=1&take=1");
+        // Pagination: skip=1 take=1 returns the 2nd item from this user's list
+        var pageResponse = await client.GetAsync("/files?skip=1&take=1");
         pageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var page = await pageResponse.Content.ReadFromJsonAsync<List<File>>();
         page.Should().HaveCount(1);

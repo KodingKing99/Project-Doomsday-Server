@@ -40,10 +40,9 @@ public sealed class MongoDbFileRepository : IFileRepository
         CancellationToken cancellationToken
     )
     {
-        // We will probably filter by a team or orgs user id, but this works for now
         var filter = Builders<File>.Filter.Eq(f => f.UserId, request.AuthenticatedUserId);
         return await _collection
-            .Find(FilterDefinition<File>.Empty)
+            .Find(filter)
             .SortByDescending(f => f.UpdatedAtUtc)
             .Skip(request.Skip)
             .Limit(request.Take)

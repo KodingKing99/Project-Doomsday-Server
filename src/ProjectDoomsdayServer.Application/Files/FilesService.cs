@@ -1,5 +1,5 @@
+using ProjectDoomsdayServer.Application.Exceptions;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
-using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files;
@@ -16,13 +16,13 @@ public sealed class FilesService : IFilesService
     }
 
     public async Task<CreateFileResult> CreateAsync(
-        CreateFileInput input,
-        string userId,
+        CreateFileRequest request,
         CancellationToken cancellationToken
     )
     {
+        var input = request.Input;
         var now = DateTime.UtcNow;
-        var record = new File()
+        var record = new File
         {
             CreatedAtUtc = now,
             Metadata = input.Metadata,
@@ -31,7 +31,7 @@ public sealed class FilesService : IFilesService
             HashSha256 = input.HashSha256,
             SizeBytes = input.SizeBytes,
             UpdatedAtUtc = now,
-            UserId = userId,
+            UserId = request.AuthenticatedUserId,
         };
         var created = await _repo.CreateAsync(record, cancellationToken);
 
@@ -46,34 +46,65 @@ public sealed class FilesService : IFilesService
         return new CreateFileResult(created, uploadUrl);
     }
 
-    public async Task<File> UpdateAsync(File record, CancellationToken cancellationToken)
+    public async Task<File> GetAsync(GetFileRequest request, CancellationToken cancellationToken)
     {
-        record.UpdatedAtUtc = DateTimeOffset.UtcNow;
-        await _repo.UpdateAsync(record, cancellationToken);
+        var record = await _repo.GetAsync(request.Id, cancellationToken);
+        if (record is null || record.UserId != request.AuthenticatedUserId)
+            throw new FileRecordNotFoundException($"File {request.Id} not found.");
         return record;
     }
-
-    public Task<File?> GetAsync(string id, CancellationToken cancellationToken) =>
-        _repo.GetAsync(id, cancellationToken);
 
     public Task<IReadOnlyList<File>> ListAsync(
         ListFileRequest request,
         CancellationToken cancellationToken
     ) => _repo.ListAsync(request, cancellationToken);
 
-    public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+    public async Task<File> UpdateAsync(
+        UpdateFileRequest request,
+        CancellationToken cancellationToken
+    )
     {
-        var file = await _repo.GetAsync(id, cancellationToken);
-        if (file?.StorageKey is not null)
-            await _storage.DeleteAsync(file.StorageKey, cancellationToken);
-        await _repo.DeleteAsync(id, cancellationToken);
+        var existing = await _repo.GetAsync(request.Id, cancellationToken);
+        if (existing is null || existing.UserId != request.AuthenticatedUserId)
+            throw new FileRecordNotFoundException($"File {request.Id} not found.");
+
+        existing.FileName = request.FileName;
+        existing.ContentType = request.ContentType;
+        existing.SizeBytes = request.SizeBytes;
+        existing.HashSha256 = request.HashSha256;
+        if (existing.Metadata is not null)
+        {
+            existing.Metadata.Clear();
+            foreach (var kv in request.Metadata)
+                existing.Metadata[kv.Key] = kv.Value;
+        }
+        existing.UpdatedAtUtc = DateTimeOffset.UtcNow;
+
+        await _repo.UpdateAsync(existing, cancellationToken);
+        return existing;
     }
 
-    public async Task<Stream> DownloadAsync(string id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(DeleteFileRequest request, CancellationToken cancellationToken)
     {
-        var file = await _repo.GetAsync(id, cancellationToken);
-        if (file?.StorageKey is null)
-            throw new FileNotFoundException($"File {id} not found or has no storage key.");
+        var file = await _repo.GetAsync(request.Id, cancellationToken);
+        if (file is null || file.UserId != request.AuthenticatedUserId)
+            throw new FileRecordNotFoundException($"File {request.Id} not found.");
+
+        if (file.StorageKey is not null)
+            await _storage.DeleteAsync(file.StorageKey, cancellationToken);
+        await _repo.DeleteAsync(request.Id, cancellationToken);
+    }
+
+    public async Task<Stream> DownloadAsync(
+        DownloadFileRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        var file = await _repo.GetAsync(request.Id, cancellationToken);
+        if (file is null || file.UserId != request.AuthenticatedUserId)
+            throw new FileRecordNotFoundException($"File {request.Id} not found.");
+        if (file.StorageKey is null)
+            throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
         return await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
     }
 }

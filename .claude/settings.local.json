@@ -3,7 +3,10 @@
     "allow": [
       "Bash(dotnet build:*)",
       "Bash(dotnet test:*)",
-      "WebFetch(domain:testcontainers.com)"
+      "WebFetch(domain:testcontainers.com)",
+      "Bash(bd *)",
+      "Bash(dotnet csharpier format *)",
+      "Bash(xargs cat)"
     ]
   }
 }

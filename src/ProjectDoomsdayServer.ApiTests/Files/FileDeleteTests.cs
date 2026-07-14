@@ -79,16 +79,15 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Delete_NonExistingFile_Returns204()
+    public async Task Delete_NonExistingFile_Returns404()
     {
-        // Idempotent delete - no error for missing file
         // Arrange
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
         var response = await _client.DeleteAsync($"/files/{randomId}");
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        // Assert — service throws FileNotFoundException for missing files, mapped to 404
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

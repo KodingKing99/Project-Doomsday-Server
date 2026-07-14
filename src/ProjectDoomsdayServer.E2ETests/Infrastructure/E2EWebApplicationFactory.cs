@@ -43,8 +43,8 @@ public sealed class E2EWebApplicationFactory : WebApplicationFactory<Program>
             RemoveAllDescriptors<IMongoClient>(services);
             services.AddSingleton<IMongoClient>(_ => new MongoClient(_infra.MongoConnectionString));
 
-            // 4. Override MongoDB database name
-            services.PostConfigure<MongoDbConfig>(cfg => cfg.DatabaseName = "e2e-tests");
+            // 4. Override MongoDB database name with the per-run unique name
+            services.PostConfigure<MongoDbConfig>(cfg => cfg.DatabaseName = _infra.DatabaseName);
         });
 
         builder.UseSetting("Authentication:Enabled", "true");

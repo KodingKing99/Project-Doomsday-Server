@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
@@ -105,15 +106,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             repoSub
-                .ListAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                .ListAsync(Arg.Any<ListFileRequest>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
-                    var skip = callInfo.ArgAt<int>(0);
-                    var take = callInfo.ArgAt<int>(1);
+                    var request = callInfo.ArgAt<ListFileRequest>(0);
                     var list = FileRecords
-                        .Values.OrderByDescending(f => f.UpdatedAtUtc)
-                        .Skip(skip)
-                        .Take(take)
+                        .Values.Where(f => f.UserId == request.AuthenticatedUserId)
+                        .OrderByDescending(f => f.UpdatedAtUtc)
+                        .Skip(request.Skip)
+                        .Take(request.Take)
                         .ToList();
                     return Task.FromResult<IReadOnlyList<File>>(list);
                 });

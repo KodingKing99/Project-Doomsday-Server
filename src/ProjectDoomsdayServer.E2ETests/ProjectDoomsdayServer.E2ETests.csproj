@@ -12,7 +12,6 @@
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="FluentAssertions" Version="8.8.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
-    <PackageReference Include="Testcontainers.MongoDb" Version="4.10.0" />
     <PackageReference Include="Testcontainers.Minio" Version="4.10.0" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.15.1" />
   </ItemGroup>
