@@ -1,4 +1,4 @@
-using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Application.Interfaces;
 
 namespace ProjectDoomsdayServer.Infrastructure.Files;
 

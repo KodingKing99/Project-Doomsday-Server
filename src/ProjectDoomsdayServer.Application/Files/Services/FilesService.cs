@@ -1,8 +1,10 @@
 using ProjectDoomsdayServer.Application.Exceptions;
+using ProjectDoomsdayServer.Application.Files.Requests;
+using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
-namespace ProjectDoomsdayServer.Application.Files;
+namespace ProjectDoomsdayServer.Application.Files.Services;
 
 public sealed class FilesService : IFilesService
 {

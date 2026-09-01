@@ -1,7 +1,7 @@
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Domain.Models.Input;
 
-namespace ProjectDoomsdayServer.Application.Files;
+namespace ProjectDoomsdayServer.Application.Files.Requests;
 
 public class CreateFileRequest : IAuthenticatedRequest
 {

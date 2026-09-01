@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Application.Files.Requests;
+using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 

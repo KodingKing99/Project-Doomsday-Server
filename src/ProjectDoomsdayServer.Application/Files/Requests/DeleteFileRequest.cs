@@ -1,6 +1,6 @@
 using ProjectDoomsdayServer.Application.Interfaces;
 
-namespace ProjectDoomsdayServer.Application.Files;
+namespace ProjectDoomsdayServer.Application.Files.Requests;
 
 public class DeleteFileRequest : IAuthenticatedRequest
 {

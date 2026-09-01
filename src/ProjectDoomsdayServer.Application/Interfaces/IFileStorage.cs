@@ -1,4 +1,4 @@
-namespace ProjectDoomsdayServer.Application.Files;
+namespace ProjectDoomsdayServer.Application.Interfaces;
 
 public interface IFileStorage
 {

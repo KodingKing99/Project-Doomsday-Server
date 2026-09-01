@@ -1,7 +1,8 @@
 using ProjectDoomsdayServer.Application.Exceptions;
+using ProjectDoomsdayServer.Application.Files.Requests;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
-namespace ProjectDoomsdayServer.Application.Files;
+namespace ProjectDoomsdayServer.Application.Interfaces;
 
 /// <summary>
 /// Orchestrates file operations, enforcing per-user ownership on all reads and writes.

@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Amazon.S3;
 using FluentAssertions;
-using ProjectDoomsdayServer.Application.Files;
+using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.E2ETests.Infrastructure;
 using ProjectDoomsdayServer.TestSupport;
