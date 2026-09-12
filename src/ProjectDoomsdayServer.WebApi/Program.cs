@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Amazon.S3;
+using Amazon.Textract;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -18,11 +19,13 @@ builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
+builder.Services.AddSingleton<IFileExtractionService, FileExtractionService>();
 builder.Services.AddScoped<IFilesService, FilesService>();
 
 #region AWS
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonS3>();
+builder.Services.AddAWSService<IAmazonTextract>();
 builder.Services.Configure<S3Config>(builder.Configuration.GetSection("S3"));
 #endregion AWS
 

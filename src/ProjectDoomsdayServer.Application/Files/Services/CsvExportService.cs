@@ -7,15 +7,12 @@ namespace ProjectDoomsdayServer.Application.Files.Services;
 public sealed class CsvExportService : ICsvExportService
 {
     private readonly IFilesService _filesService;
-    private Dictionary<string, string> testMetaData = new Dictionary<string, string>([
-        new KeyValuePair<string, string>("content", "{root beer float: $8.60, burger: $2.10}"),
-    ]);
 
     private readonly DbFile testFile = new DbFile
     {
-        ContentType = "pdf",
+        ContentType = "jpg",
         CreatedAtUtc = DateTime.UtcNow,
-        FileName = "hi_lauren",
+        FileName = "mcd_example",
         Id = "1234",
         SizeBytes = 256,
         UserId = "1234",

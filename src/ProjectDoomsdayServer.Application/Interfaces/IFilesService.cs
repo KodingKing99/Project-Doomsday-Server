@@ -48,4 +48,15 @@ public interface IFilesService
     /// Throws <see cref="FileRecordNotFoundException"/> if missing, not owned, or has no storage key.
     /// </summary>
     Task<Stream> DownloadAsync(DownloadFileRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Extract expense information from a receipt or other financial document
+    /// </summary>
+    /// <param name="extractExpenseImageInfoRequest"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task ExtractExpenseInformationAsync(
+        ExtractExpenseImageInfoRequest extractExpenseImageInfoRequest,
+        CancellationToken cancellationToken
+    );
 }

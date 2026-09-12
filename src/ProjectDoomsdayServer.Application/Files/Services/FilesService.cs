@@ -11,11 +11,17 @@ public sealed class FilesService : IFilesService
 {
     private readonly IFileRepository _repo;
     private readonly IFileStorage _storage;
+    private readonly IFileExtractionService _fileExtractionService;
 
-    public FilesService(IFileRepository repo, IFileStorage storage)
+    public FilesService(
+        IFileRepository repo,
+        IFileStorage storage,
+        IFileExtractionService fileExtractionService
+    )
     {
         _repo = repo;
         _storage = storage;
+        _fileExtractionService = fileExtractionService;
     }
 
     public async Task<CreateFileResult> CreateAsync(
@@ -109,5 +115,23 @@ public sealed class FilesService : IFilesService
         if (file.StorageKey is null)
             throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
         return await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
+    }
+
+    public async Task ExtractExpenseInformationAsync(
+        ExtractExpenseImageInfoRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        var file = await _repo.GetAsync(request.Id, cancellationToken);
+        if (file is null || file.UserId != request.AuthenticatedUserId)
+            throw new FileRecordNotFoundException($"File {request.Id} not found.");
+        if (file.StorageKey is null)
+            throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
+        using var stream = await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        await _fileExtractionService.ExtractExpenseInformationAsync(ms, cancellationToken);
+
+        throw new NotImplementedException();
     }
 }

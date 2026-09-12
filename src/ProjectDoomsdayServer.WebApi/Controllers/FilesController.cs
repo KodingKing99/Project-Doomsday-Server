@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files.Requests;
+using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
@@ -161,6 +162,24 @@ public sealed class FilesController : ControllerBase
 
         await _filesService.DeleteAsync(
             new DeleteFileRequest { Id = id, AuthenticatedUserId = userId },
+            cancellationToken
+        );
+        return NoContent();
+    }
+
+    [HttpGet("{id}/extract")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Extract(string id, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue("sub");
+        if (userId is null)
+            return BadRequest("User must be authenticated");
+        await _filesService.ExtractExpenseInformationAsync(
+            new ExtractExpenseImageInfoRequest { AuthenticatedUserId = userId, Id = id },
             cancellationToken
         );
         return NoContent();
