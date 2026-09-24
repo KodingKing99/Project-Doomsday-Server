@@ -167,21 +167,21 @@ public sealed class FilesController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("{id}/extract")]
+    [HttpPost("{id}/extractExpenseInfo")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Extract(string id, CancellationToken cancellationToken)
+    public async Task<ActionResult<string>> Extract(string id, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue("sub");
         if (userId is null)
             return BadRequest("User must be authenticated");
-        await _filesService.ExtractExpenseInformationAsync(
+        var result = await _filesService.ExtractExpenseInformationAsync(
             new ExtractExpenseImageInfoRequest { AuthenticatedUserId = userId, Id = id },
             cancellationToken
         );
-        return NoContent();
+        return Ok(result);
     }
 }

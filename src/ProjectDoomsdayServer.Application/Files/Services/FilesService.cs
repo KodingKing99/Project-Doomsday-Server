@@ -117,7 +117,7 @@ public sealed class FilesService : IFilesService
         return await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
     }
 
-    public async Task ExtractExpenseInformationAsync(
+    public async Task<string> ExtractExpenseInformationAsync(
         ExtractExpenseImageInfoRequest request,
         CancellationToken cancellationToken
     )
@@ -128,10 +128,11 @@ public sealed class FilesService : IFilesService
         if (file.StorageKey is null)
             throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
         using var stream = await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
-        using var ms = new MemoryStream();
-        stream.CopyTo(ms);
-        await _fileExtractionService.ExtractExpenseInformationAsync(ms, cancellationToken);
-
-        throw new NotImplementedException();
+        using var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+        return await _fileExtractionService.ExtractExpenseInformationAsync(
+            memoryStream,
+            cancellationToken
+        );
     }
 }

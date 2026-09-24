@@ -255,7 +255,6 @@ curl -H "Authorization: Bearer <AccessToken>" https://localhost:7xxx/files
 | `FilesService.cs` | Pass `userId` through to repository |
 | `Ports.cs` (IFileRepository) | Add `userId` params to relevant methods |
 | `MongoDbFileRepository.cs` | Add `UserId` filter to queries, add index |
-| `InMemoryFileRepository.cs` | Add `userId` filter to queries |
 | `CustomWebApplicationFactory.cs` | Add test auth handler (if Option B) |
 
 ---

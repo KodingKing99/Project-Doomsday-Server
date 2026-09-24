@@ -55,7 +55,7 @@ public interface IFilesService
     /// <param name="extractExpenseImageInfoRequest"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task ExtractExpenseInformationAsync(
+    Task<string> ExtractExpenseInformationAsync(
         ExtractExpenseImageInfoRequest extractExpenseImageInfoRequest,
         CancellationToken cancellationToken
     );

@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using Amazon.Textract;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Interfaces;
@@ -22,6 +24,11 @@ public sealed class FileExtractionService : IFileExtractionService
             new() { Document = new() { Bytes = stream } },
             cancellationToken
         );
-        throw new NotImplementedException();
+        var builder = new StringBuilder();
+        foreach (var document in response.ExpenseDocuments)
+        {
+            builder.Append(JsonSerializer.Serialize(document));
+        }
+        return builder.ToString();
     }
 }

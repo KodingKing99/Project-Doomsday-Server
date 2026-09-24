@@ -26,7 +26,6 @@ src/
 │       ├── S3FileStorage.cs                # AWS S3 implementation
 │       ├── LocalFileStorage.cs             # Local filesystem implementation
 │       ├── MongoDbFileRepository.cs        # MongoDB implementation
-│       └── InMemoryFileRepository.cs       # In-memory fallback
 ├── ProjectDoomsdayServer.WebApi/           # API endpoints
 │   └── Files/
 │       └── FilesController.cs              # File CRUD endpoints
@@ -113,7 +112,7 @@ src/
 
 ## Core Requirements Checklist
 
-- [ ] **Cognito Authentication** - JWT Bearer auth with Amazon Cognito
+- [x] **Cognito Authentication** - JWT Bearer auth with Amazon Cognito
 - [x] **File CRUD** - Upload, list, get, update metadata, download, delete
 - [x] **S3 Storage** - Full presigned URL workflow + read/delete/exists
 - [x] **MongoDB** - Persistent metadata with `MongoDbFileRepository`
