@@ -4,6 +4,7 @@ using FluentAssertions;
 using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
+using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.TestSupport;
 using Xunit;

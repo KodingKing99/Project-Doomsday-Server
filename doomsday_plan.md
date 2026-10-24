@@ -46,10 +46,12 @@ src/
 | S3 Presigned URLs | ✅ Done | Returned in `POST /files` response |
 | S3 Full Implementation | ✅ Done | Save, OpenRead, Delete, Exists all implemented |
 | MongoDB Repository | ✅ Done | `MongoDbFileRepository` with `StringObjectIdGenerator` |
-| Mocked Integration Tests | ✅ Done | 29 tests in `ApiTests` — no Docker required |
-| E2E Tests | ✅ Done | 12 tests in `E2ETests` — real MongoDB + MinIO via Testcontainers |
-| Cognito Auth | ⚠️ Configured | Disabled in development, toggled via `Authentication:Enabled` |
-| CSV Export | ❌ Not started | - |
+| Mocked Integration Tests | ⚠️ Broken build | `ApiTests` — no Docker required. Fails to compile since `CreateFileResult` moved to `Application.Files.Results` (see `expense-extraction-plan.md` step 0) |
+| E2E Tests | ⚠️ Broken build | `E2ETests` — real MongoDB + MinIO via Testcontainers. Same compile error |
+| Cognito Auth | ✅ Done | JWT Bearer + `[Authorize]` + per-user ownership; toggled via `Authentication:Enabled` |
+| Expense Extraction (Textract) | 🚧 In progress | `POST /files/{id}/extractExpenseInfo` calls `AnalyzeExpense`; result not yet persisted — see `expense-extraction-plan.md` |
+| CSV Export | 🚧 Stub | `CsvExportService` throws `NotImplementedException` |
+| RAG / Vector Search | ❌ Not started | - |
 | Query Document API | ❌ Not started | - |
 
 ### File CRUD Endpoints
@@ -60,6 +62,7 @@ src/
 4. `GET /files/{id}` — Get file metadata
 5. `GET /files/{id}/content` — Download file content
 6. `DELETE /files/{id}` — Delete file and storage object
+7. `POST /files/{id}/extractExpenseInfo` — Run Textract `AnalyzeExpense` on the file (will persist to `File.ExtractedExpenseInfo`)
 
 ---
 
@@ -69,7 +72,10 @@ src/
 
 ### ~~Phase 2: MongoDB Repository~~ ✅ Done
 
-### Phase 3: Authentication
+### ~~Phase 3: Authentication~~ ✅ Done
+
+<details><summary>Original tasks</summary>
+
 
 **Goal:** Secure API with Amazon Cognito
 
@@ -81,6 +87,16 @@ src/
 | 3.4 | Extract user ID from JWT claims for file ownership |
 
 **Dependencies:** Cognito user pool configured
+
+</details>
+
+---
+
+### Phase 3.5: Expense Extraction Persistence
+
+**Goal:** Persist Textract `AnalyzeExpense` output as a typed, server-owned `File.ExtractedExpenseInfo` subdocument (summary fields, line items, geometry for overlay confirmation, raw text for RAG), and catch the test suites up.
+
+**Plan:** [`expense-extraction-plan.md`](expense-extraction-plan.md) · **Data reference:** [`docs/extracted-expense-info.md`](docs/extracted-expense-info.md) · **Decision:** [ADR 0001](docs/adr/0001-extracted-expense-info-is-a-server-owned-subdocument.md)
 
 ---
 
@@ -103,10 +119,23 @@ src/
 
 | Task | Description |
 |------|-------------|
-| 5.1 | Implement receipt data extraction from files |
+| 5.1 | ~~Implement receipt data extraction from files~~ → Phase 3.5 (`ExtractedExpenseInfo`) |
 | 5.2 | Create CSV generation service |
 | 5.3 | Add CSV export endpoint |
 | 5.4 | Support filtering and date ranges |
+
+---
+
+### Phase 6: RAG / Vector Search
+
+**Goal:** Make extracted expense data queryable in natural language via MongoDB Atlas Vector Search (see the [Atlas RAG tutorial](https://www.mongodb.com/docs/vector-search/tutorials/rag/)).
+
+| Task | Description |
+|------|-------------|
+| 6.1 | Generate embeddings from `ExtractedExpenseInfo.RawText` (+ key summary fields) |
+| 6.2 | Create Atlas Vector Search index on the `files` collection |
+| 6.3 | Retrieval endpoint scoped to the authenticated user |
+| 6.4 | LLM answer generation over retrieved expenses |
 
 ---
 
@@ -117,8 +146,10 @@ src/
 - [x] **S3 Storage** - Full presigned URL workflow + read/delete/exists
 - [x] **MongoDB** - Persistent metadata with `MongoDbFileRepository`
 - [x] **E2E Test Coverage** - Real infrastructure validation via Testcontainers
+- [ ] **Expense Extraction Persistence** - Store Textract output on the File (Phase 3.5)
 - [ ] **Query Document API** - Third-party document query integration
 - [ ] **CSV Export** - Receipt data export functionality
+- [ ] **RAG / Vector Search** - Atlas Vector Search over extracted expenses
 
 ---
 

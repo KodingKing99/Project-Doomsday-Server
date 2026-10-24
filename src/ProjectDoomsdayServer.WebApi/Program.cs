@@ -19,6 +19,7 @@ builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileExtractionService, FileExtractionService>();
 builder.Services.AddScoped<IFilesService, FilesService>();
 

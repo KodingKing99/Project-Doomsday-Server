@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
+using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 

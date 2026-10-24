@@ -1,6 +1,7 @@
 using ProjectDoomsdayServer.Application.Exceptions;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
+using ProjectDoomsdayServer.Domain.Models.Extraction;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Interfaces;
@@ -50,12 +51,12 @@ public interface IFilesService
     Task<Stream> DownloadAsync(DownloadFileRequest request, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Extract expense information from a receipt or other financial document
+    /// Returns the expense information extracted from a receipt or other financial document.
+    /// Serves the persisted result when present; runs extraction and persists it when absent
+    /// or when <see cref="ExtractExpenseImageInfoRequest.Force"/> is set.
+    /// Throws <see cref="FileRecordNotFoundException"/> if missing, not owned, or has no storage key.
     /// </summary>
-    /// <param name="extractExpenseImageInfoRequest"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task<string> ExtractExpenseInformationAsync(
+    Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
         ExtractExpenseImageInfoRequest extractExpenseImageInfoRequest,
         CancellationToken cancellationToken
     );

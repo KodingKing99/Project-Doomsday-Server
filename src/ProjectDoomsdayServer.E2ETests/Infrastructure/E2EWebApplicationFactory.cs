@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Domain.Configuration;
 using ProjectDoomsdayServer.TestSupport;
 
@@ -12,6 +13,8 @@ namespace ProjectDoomsdayServer.E2ETests.Infrastructure;
 public sealed class E2EWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly E2EInfrastructureFixture _infra;
+
+    public FakeFileExtractionService ExtractionService { get; } = new();
 
     public E2EWebApplicationFactory(E2EInfrastructureFixture infra) => _infra = infra;
 
@@ -43,7 +46,11 @@ public sealed class E2EWebApplicationFactory : WebApplicationFactory<Program>
             RemoveAllDescriptors<IMongoClient>(services);
             services.AddSingleton<IMongoClient>(_ => new MongoClient(_infra.MongoConnectionString));
 
-            // 4. Override MongoDB database name with the per-run unique name
+            // 4. Replace Textract-backed extraction so no AWS credentials are needed
+            RemoveAllDescriptors<IFileExtractionService>(services);
+            services.AddSingleton<IFileExtractionService>(ExtractionService);
+
+            // 5. Override MongoDB database name with the per-run unique name
             services.PostConfigure<MongoDbConfig>(cfg => cfg.DatabaseName = _infra.DatabaseName);
         });
 

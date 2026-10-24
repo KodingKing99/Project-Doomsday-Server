@@ -3,6 +3,7 @@ using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
+using ProjectDoomsdayServer.Domain.Models.Extraction;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files.Services;
@@ -117,7 +118,7 @@ public sealed class FilesService : IFilesService
         return await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
     }
 
-    public async Task<string> ExtractExpenseInformationAsync(
+    public async Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
         ExtractExpenseImageInfoRequest request,
         CancellationToken cancellationToken
     )
@@ -127,12 +128,20 @@ public sealed class FilesService : IFilesService
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
         if (file.StorageKey is null)
             throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
+        if (file.ExtractedExpenseInfo is not null && !request.Force)
+            return file.ExtractedExpenseInfo;
+
         using var stream = await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
         using var memoryStream = new MemoryStream();
-        stream.CopyTo(memoryStream);
-        return await _fileExtractionService.ExtractExpenseInformationAsync(
+        await stream.CopyToAsync(memoryStream, cancellationToken);
+        var extracted = await _fileExtractionService.ExtractExpenseInformationAsync(
             memoryStream,
             cancellationToken
         );
+
+        file.ExtractedExpenseInfo = extracted;
+        file.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await _repo.UpdateAsync(file, cancellationToken);
+        return extracted;
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Interfaces;
@@ -17,6 +18,10 @@ public sealed class MongoDbFileRepository : IFileRepository
 
     static MongoDbFileRepository()
     {
+        BsonSerializer.RegisterSerializer(new DecimalSerializer(BsonType.Decimal128));
+        BsonSerializer.RegisterSerializer(
+            new NullableSerializer<decimal>(new DecimalSerializer(BsonType.Decimal128))
+        );
         BsonClassMap.RegisterClassMap<File>(cm =>
         {
             cm.AutoMap();

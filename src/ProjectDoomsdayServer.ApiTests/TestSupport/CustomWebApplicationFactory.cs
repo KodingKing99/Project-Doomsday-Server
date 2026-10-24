@@ -18,6 +18,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     public IFileStorage? FileStorageSubstitute { get; private set; }
     public IFileRepository? FileRepositorySubstitute { get; private set; }
+    public IFileExtractionService FileExtractionServiceSubstitute { get; } =
+        Substitute.For<IFileExtractionService>();
 
     // Track operations for assertions
     public ConcurrentDictionary<string, byte[]> SavedFiles { get; } = new();
@@ -41,6 +43,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             RemoveService<IFileStorage>(services);
             RemoveService<IFileRepository>(services);
+            RemoveService<IFileExtractionService>(services);
+
+            services.AddSingleton(FileExtractionServiceSubstitute);
 
             // Configure IFileStorage substitute
             var storageSub = Substitute.For<IFileStorage>();
@@ -136,7 +141,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .Returns(callInfo =>
                 {
                     var record = callInfo.ArgAt<File>(0);
-                    FileRecords[record.Id] = record;
+                    FileRecords[record.Id!] = record;
                     return Task.CompletedTask;
                 });
 
@@ -159,5 +164,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         SavedFiles.Clear();
         DeletedFileIds.Clear();
         FileRecords.Clear();
+        FileExtractionServiceSubstitute.ClearReceivedCalls();
     }
 }

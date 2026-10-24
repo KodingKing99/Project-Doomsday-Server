@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
+using ProjectDoomsdayServer.Domain.Models.Extraction;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -169,17 +170,26 @@ public sealed class FilesController : ControllerBase
 
     [HttpPost("{id}/extractExpenseInfo")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ExtractedExpenseInfo>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<string>> Extract(string id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ExtractedExpenseInfo>> Extract(
+        string id,
+        [FromQuery] bool force = false,
+        CancellationToken cancellationToken = default
+    )
     {
         var userId = User.FindFirstValue("sub");
         if (userId is null)
             return BadRequest("User must be authenticated");
         var result = await _filesService.ExtractExpenseInformationAsync(
-            new ExtractExpenseImageInfoRequest { AuthenticatedUserId = userId, Id = id },
+            new ExtractExpenseImageInfoRequest
+            {
+                AuthenticatedUserId = userId,
+                Id = id,
+                Force = force,
+            },
             cancellationToken
         );
         return Ok(result);
