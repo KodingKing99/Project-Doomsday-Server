@@ -1,8 +1,8 @@
-using ProjectDoomsdayServer.Domain.Models.Extraction;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
-namespace ProjectDoomsdayServer.Application.Interfaces;
+namespace ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
 
-public interface IFileExtractionService
+public interface IFileTextExtractionService
 {
     /// <summary>
     /// Runs expense extraction over an image or PDF of a receipt or invoice.

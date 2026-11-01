@@ -3,7 +3,8 @@ using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
-using ProjectDoomsdayServer.Domain.Models.Extraction;
+using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files.Services;
@@ -12,12 +13,12 @@ public sealed class FilesService : IFilesService
 {
     private readonly IFileRepository _repo;
     private readonly IFileStorage _storage;
-    private readonly IFileExtractionService _fileExtractionService;
+    private readonly IFileTextExtractionService _fileExtractionService;
 
     public FilesService(
         IFileRepository repo,
         IFileStorage storage,
-        IFileExtractionService fileExtractionService
+        IFileTextExtractionService fileExtractionService
     )
     {
         _repo = repo;

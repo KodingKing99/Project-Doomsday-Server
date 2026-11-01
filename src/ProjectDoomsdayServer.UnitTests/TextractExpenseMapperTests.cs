@@ -8,7 +8,7 @@ public class TextractExpenseMapperTests
 {
     private static readonly DateTimeOffset ExtractedAt = new(2026, 9, 23, 17, 0, 0, TimeSpan.Zero);
 
-    private static Domain.Models.Extraction.Expense MapSingleExpense() =>
+    private static Domain.Models.TextExtraction.Expense MapSingleExpense() =>
         TextractExpenseMapper.Map(McDonaldsReceiptResponse.Create(), ExtractedAt).Expenses.Single();
 
     [Fact]

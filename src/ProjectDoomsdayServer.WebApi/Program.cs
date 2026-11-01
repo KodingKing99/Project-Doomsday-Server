@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using ProjectDoomsdayServer.Application.Files.Services;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
+using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
 using ProjectDoomsdayServer.Domain.Configuration;
 using ProjectDoomsdayServer.Infrastructure;
 using ProjectDoomsdayServer.Infrastructure.Files;
@@ -20,7 +21,7 @@ builder.Logging.AddConsole();
 builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<IFileExtractionService, FileExtractionService>();
+builder.Services.AddSingleton<IFileTextExtractionService, FileExtractionService>();
 builder.Services.AddScoped<IFilesService, FilesService>();
 
 #region AWS

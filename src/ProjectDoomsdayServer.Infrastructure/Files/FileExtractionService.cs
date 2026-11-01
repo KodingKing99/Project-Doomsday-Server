@@ -1,10 +1,11 @@
 using Amazon.Textract;
 using ProjectDoomsdayServer.Application.Interfaces;
-using ProjectDoomsdayServer.Domain.Models.Extraction;
+using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
 namespace ProjectDoomsdayServer.Infrastructure.Files;
 
-public sealed class FileExtractionService : IFileExtractionService
+public sealed class FileExtractionService : IFileTextExtractionService
 {
     private readonly IAmazonTextract _awsTextractClient;
     private readonly TimeProvider _timeProvider;

@@ -1,4 +1,4 @@
-using ProjectDoomsdayServer.Domain.Models.Extraction;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
 namespace ProjectDoomsdayServer.Domain.DB_Models;
 

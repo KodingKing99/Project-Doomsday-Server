@@ -23,17 +23,17 @@ File
         ├── VendorPhone     ExtractedField?
         ├── ReceiptId       ExtractedField?
         ├── ReceiptDate     ExtractedDateField?
-        ├── Subtotal        ExtractedAmountField?
-        ├── Tax             ExtractedAmountField?
-        ├── Total           ExtractedAmountField?
-        ├── AmountPaid      ExtractedAmountField?
+        ├── Subtotal        AmmountField?
+        ├── Tax             AmmountField?
+        ├── Total           AmmountField?
+        ├── AmountPaid      AmmountField?
         ├── SummaryFields[] ExtractedField    lossless: every summary field Textract returned
         └── LineItems[]     LineItem
             ├── GroupIndex  int               Textract LineItemGroupIndex (groups are flattened)
             ├── Item        ExtractedField?
-            ├── Quantity    ExtractedAmountField?
-            ├── UnitPrice   ExtractedAmountField?
-            ├── Price       ExtractedAmountField?   line total, NOT unit price
+            ├── Quantity    AmmountField?
+            ├── UnitPrice   AmmountField?
+            ├── Price       AmmountField?   line total, NOT unit price
             ├── ProductCode ExtractedField?
             ├── ExpenseRow  ExtractedField?   the whole row's text + Geometry
             └── OtherFields[] ExtractedField  any line-item field not mapped above
@@ -44,7 +44,7 @@ File
 | Type | Fields | Notes |
 |------|--------|-------|
 | `ExtractedField` | `Type`, `Label?`, `LabelConfidence?`, `Text`, `Confidence`, `Geometry?` | `Type` is Textract's field type (`TOTAL`, `VENDOR_NAME`, `OTHER`…). `Label` is the printed label if any (`"SUB TOTAL"`). `Text` is exactly what was read — never altered. Confidence is 0–100. |
-| `ExtractedAmountField` | `ExtractedField` + `Amount: decimal?` | `Amount` parsed from `Text` (invariant culture, currency symbols/commas stripped). `null` when unparseable. Stored as Mongo `Decimal128`. |
+| `AmmountField` | `ExtractedField` + `Amount: decimal?` | `Amount` parsed from `Text` (invariant culture, currency symbols/commas stripped). `null` when unparseable. Stored as Mongo `Decimal128`. |
 | `ExtractedDateField` | `ExtractedField` + `Date: DateOnly?` | Parsed with a small set of common receipt formats. `null` when unparseable — the raw `Text` is always kept. |
 | `Geometry` | `PageNumber`, `BoundingBox { Left, Top, Width, Height }`, `Polygon[] { X, Y }` | Normalized 0–1 as a fraction of page width/height. Multiply by the rendered image size to draw an overlay. Polygon follows skewed/rotated text; BoundingBox is the axis-aligned rectangle. Geometry is stored for the **value** only, not the label. |
 

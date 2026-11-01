@@ -63,3 +63,4 @@ dotnet test --verbosity normal 2>&1
 - `src/ProjectDoomsdayServer.Infrastructure` - Infrastructure layer (MongoDB, S3/MinIO)
 - `src/ProjectDoomsdayServer.ApiTests` - Mocked integration tests using xUnit, FluentAssertions, NSubstitute
 - `src/ProjectDoomsdayServer.E2ETests` - Full-stack E2E tests using Testcontainers (MongoDB + MinIO)
+

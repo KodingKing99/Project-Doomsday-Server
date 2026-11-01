@@ -1,9 +1,10 @@
 using ProjectDoomsdayServer.Application.Interfaces;
-using ProjectDoomsdayServer.Domain.Models.Extraction;
+using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
 namespace ProjectDoomsdayServer.E2ETests.Infrastructure;
 
-public sealed class FakeFileExtractionService : IFileExtractionService
+public sealed class FakeFileExtractionService : IFileTextExtractionService
 {
     private int _callCount;
 
@@ -41,7 +42,7 @@ public sealed class FakeFileExtractionService : IFileExtractionService
                         Text = "2008-06-22",
                         Date = new DateOnly(2008, 6, 22),
                     },
-                    Total = new ExtractedAmountField
+                    Total = new AmmountField
                     {
                         Type = "TOTAL",
                         Text = "11.52",
@@ -72,7 +73,7 @@ public sealed class FakeFileExtractionService : IFileExtractionService
                         {
                             GroupIndex = 1,
                             Item = new ExtractedField { Type = "ITEM", Text = "HOTCAKES" },
-                            Price = new ExtractedAmountField
+                            Price = new AmmountField
                             {
                                 Type = "PRICE",
                                 Text = "2.29",

@@ -1,4 +1,4 @@
-namespace ProjectDoomsdayServer.Domain.Models.Extraction;
+namespace ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
 public sealed class Expense
 {
@@ -8,10 +8,10 @@ public sealed class Expense
     public ExtractedField? VendorPhone { get; set; }
     public ExtractedField? ReceiptId { get; set; }
     public ExtractedDateField? ReceiptDate { get; set; }
-    public ExtractedAmountField? Subtotal { get; set; }
-    public ExtractedAmountField? Tax { get; set; }
-    public ExtractedAmountField? Total { get; set; }
-    public ExtractedAmountField? AmountPaid { get; set; }
+    public AmmountField? Subtotal { get; set; }
+    public AmmountField? Tax { get; set; }
+    public AmmountField? Total { get; set; }
+    public AmmountField? AmountPaid { get; set; }
     public List<ExtractedField> SummaryFields { get; set; } = new();
     public List<LineItem> LineItems { get; set; } = new();
 }

@@ -1,9 +1,9 @@
 using System.Globalization;
 using Amazon.Textract.Model;
-using ProjectDoomsdayServer.Domain.Models.Extraction;
-using DomainBoundingBox = ProjectDoomsdayServer.Domain.Models.Extraction.BoundingBox;
-using DomainGeometry = ProjectDoomsdayServer.Domain.Models.Extraction.Geometry;
-using DomainPoint = ProjectDoomsdayServer.Domain.Models.Extraction.Point;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
+using DomainBoundingBox = ProjectDoomsdayServer.Domain.Models.TextExtraction.BoundingBox;
+using DomainGeometry = ProjectDoomsdayServer.Domain.Models.TextExtraction.Geometry;
+using DomainPoint = ProjectDoomsdayServer.Domain.Models.TextExtraction.Point;
 
 namespace ProjectDoomsdayServer.Infrastructure.Files;
 
@@ -155,9 +155,9 @@ public static class TextractExpenseMapper
     private static ExtractedField MapField(ExpenseField field) =>
         ApplyCommon(new ExtractedField(), field);
 
-    private static ExtractedAmountField MapAmountField(ExpenseField field)
+    private static AmmountField MapAmountField(ExpenseField field)
     {
-        var mapped = ApplyCommon(new ExtractedAmountField(), field);
+        var mapped = ApplyCommon(new AmmountField(), field);
         mapped.Amount = ParseAmount(mapped.Text);
         return mapped;
     }

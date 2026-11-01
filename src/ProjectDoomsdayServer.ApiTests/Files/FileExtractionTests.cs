@@ -5,8 +5,8 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Results;
-using ProjectDoomsdayServer.Domain.Models.Extraction;
 using ProjectDoomsdayServer.Domain.Models.Input;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
@@ -41,7 +41,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
                 {
                     ExpenseIndex = 1,
                     VendorName = new ExtractedField { Type = "VENDOR_NAME", Text = vendorName },
-                    Total = new ExtractedAmountField
+                    Total = new AmmountField
                     {
                         Type = "TOTAL",
                         Text = "11.52",

@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
-using ProjectDoomsdayServer.Domain.Models.Extraction;
 using ProjectDoomsdayServer.Domain.Models.Input;
+using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.WebApi.Controllers;

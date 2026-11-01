@@ -8,6 +8,7 @@ using NSubstitute;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
+using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
 using ProjectDoomsdayServer.Domain.DB_Models;
 using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DB_Models.File;
@@ -18,8 +19,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     public IFileStorage? FileStorageSubstitute { get; private set; }
     public IFileRepository? FileRepositorySubstitute { get; private set; }
-    public IFileExtractionService FileExtractionServiceSubstitute { get; } =
-        Substitute.For<IFileExtractionService>();
+    public IFileTextExtractionService FileExtractionServiceSubstitute { get; } =
+        Substitute.For<IFileTextExtractionService>();
 
     // Track operations for assertions
     public ConcurrentDictionary<string, byte[]> SavedFiles { get; } = new();
@@ -43,7 +44,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             RemoveService<IFileStorage>(services);
             RemoveService<IFileRepository>(services);
-            RemoveService<IFileExtractionService>(services);
+            RemoveService<IFileTextExtractionService>(services);
 
             services.AddSingleton(FileExtractionServiceSubstitute);
 

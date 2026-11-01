@@ -1,4 +1,4 @@
-namespace ProjectDoomsdayServer.Domain.Models.Extraction;
+namespace ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
 public sealed class Geometry
 {
