@@ -44,7 +44,7 @@ public sealed class PresignedUploadE2ETests : IAsyncLifetime
             ContentType = "text/plain",
             SizeBytes = content.Length,
         };
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
@@ -56,8 +56,8 @@ public sealed class PresignedUploadE2ETests : IAsyncLifetime
         var putResponse = await _rawHttpClient.PutAsync(uploadUrl, putContent);
         putResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // GET /files/{id}/content → verify bytes match
-        var downloadResponse = await client.GetAsync($"/files/{fileId}/content");
+        // GET /file/{id}/content → verify bytes match
+        var downloadResponse = await client.GetAsync($"/file/{fileId}/content");
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
         downloadedBytes.Should().Equal(content);
@@ -76,7 +76,7 @@ public sealed class PresignedUploadE2ETests : IAsyncLifetime
             ContentType = "application/octet-stream",
             SizeBytes = content.Length,
         };
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var uploadUrl = createResult!.UploadUrl;
@@ -86,7 +86,7 @@ public sealed class PresignedUploadE2ETests : IAsyncLifetime
         var putResponse = await _rawHttpClient.PutAsync(uploadUrl, putContent);
         putResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var downloadResponse = await client.GetAsync($"/files/{fileId}/content");
+        var downloadResponse = await client.GetAsync($"/file/{fileId}/content");
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
         downloadedBytes.Should().Equal(content);
@@ -105,12 +105,12 @@ public sealed class PresignedUploadE2ETests : IAsyncLifetime
             Metadata = { ["env"] = "e2e", ["version"] = "42" },
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
 
-        var getResponse = await client.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/file/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched.Should().NotBeNull();

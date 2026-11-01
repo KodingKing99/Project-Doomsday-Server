@@ -44,13 +44,13 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             SizeBytes = 100,
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
         var fileId = createResult!.File.Id;
 
-        var getResponse = await client.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/file/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched.Should().NotBeNull();
@@ -70,7 +70,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             SizeBytes = 10,
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var file = createResult!.File;
@@ -90,7 +90,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             SizeBytes = 10,
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
 
@@ -109,7 +109,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             SizeBytes = 50,
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
 
@@ -120,10 +120,10 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
             ContentType = "text/html",
             SizeBytes = 100,
         };
-        var updateResponse = await client.PutAsJsonAsync($"/files/{fileId}", updatedRecord);
+        var updateResponse = await client.PutAsJsonAsync($"/file/{fileId}", updatedRecord);
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var getResponse = await client.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/file/{fileId}");
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched!.FileName.Should().Be("updated.txt");
         fetched.ContentType.Should().Be("text/html");
@@ -144,7 +144,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
         };
 
         // Create and upload
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
         var uploadUrl = createResult.UploadUrl;
@@ -154,11 +154,11 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
         await _rawHttpClient.PutAsync(uploadUrl, putContent);
 
         // Delete via API
-        var deleteResponse = await client.DeleteAsync($"/files/{fileId}");
+        var deleteResponse = await client.DeleteAsync($"/file/{fileId}");
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // MongoDB record is gone
-        var getResponse = await client.GetAsync($"/files/{fileId}");
+        var getResponse = await client.GetAsync($"/file/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
         // MinIO object is gone
@@ -185,13 +185,13 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
                 ContentType = "text/plain",
                 SizeBytes = i * 100,
             };
-            var resp = await client.PostAsJsonAsync("/files", r);
+            var resp = await client.PostAsJsonAsync("/file", r);
             resp.StatusCode.Should().Be(HttpStatusCode.Created);
             await Task.Delay(25);
         }
 
         // List all — the API returns only this user's files
-        var listResponse = await client.GetAsync("/files?skip=0&take=200");
+        var listResponse = await client.GetAsync("/file?skip=0&take=200");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
 
@@ -202,7 +202,7 @@ public sealed class FileCrudE2ETests : IAsyncLifetime
         files[1].UpdatedAtUtc.Should().BeOnOrAfter(files[2].UpdatedAtUtc);
 
         // Pagination: skip=1 take=1 returns the 2nd item from this user's list
-        var pageResponse = await client.GetAsync("/files?skip=1&take=1");
+        var pageResponse = await client.GetAsync("/file?skip=1&take=1");
         pageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var page = await pageResponse.Content.ReadFromJsonAsync<List<File>>();
         page.Should().HaveCount(1);

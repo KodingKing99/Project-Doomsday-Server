@@ -34,7 +34,7 @@ public sealed class FileDownloadE2ETests : IAsyncLifetime
     public async Task Download_NonExistentFile_Returns404()
     {
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
-        var response = await client.GetAsync("/files/000000000000000000000000/content");
+        var response = await client.GetAsync("/file/000000000000000000000000/content");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -51,7 +51,7 @@ public sealed class FileDownloadE2ETests : IAsyncLifetime
             SizeBytes = content.Length,
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
         var uploadUrl = createResult.UploadUrl;
@@ -59,7 +59,7 @@ public sealed class FileDownloadE2ETests : IAsyncLifetime
         using var putContent = new ByteArrayContent(content);
         await _rawHttpClient.PutAsync(uploadUrl, putContent);
 
-        var downloadResponse = await client.GetAsync($"/files/{fileId}/content");
+        var downloadResponse = await client.GetAsync($"/file/{fileId}/content");
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         downloadResponse.Content.Headers.ContentType!.MediaType.Should().Be("text/html");
     }
@@ -77,7 +77,7 @@ public sealed class FileDownloadE2ETests : IAsyncLifetime
             SizeBytes = content.Length,
         };
 
-        var createResponse = await client.PostAsJsonAsync("/files", record);
+        var createResponse = await client.PostAsJsonAsync("/file", record);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         var fileId = createResult!.File.Id;
         var uploadUrl = createResult.UploadUrl;
@@ -85,7 +85,7 @@ public sealed class FileDownloadE2ETests : IAsyncLifetime
         using var putContent = new ByteArrayContent(content);
         await _rawHttpClient.PutAsync(uploadUrl, putContent);
 
-        var downloadResponse = await client.GetAsync($"/files/{fileId}/content");
+        var downloadResponse = await client.GetAsync($"/file/{fileId}/content");
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var disposition = downloadResponse.Content.Headers.ContentDisposition;

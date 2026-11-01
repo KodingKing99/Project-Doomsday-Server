@@ -8,7 +8,7 @@ namespace ProjectDoomsdayServer.Application.Files.Services;
 
 public sealed class CsvExportService : ICsvExportService
 {
-    private const string Fallback = "N/A";
+    private const string TextFallback = "N/A";
     private const string CalendarDateFormat = "yyyy-MM-dd";
 
     private static readonly string[] Columns =
@@ -94,13 +94,13 @@ public sealed class CsvExportService : ICsvExportService
             CreateTextCsvField(lineItem?.ExpenseRow),
         ];
 
-    private static string CreateTextCsvField(ExtractedField? field) => field?.Text ?? Fallback;
+    private static string CreateTextCsvField(ExtractedField? field) => field?.Text ?? TextFallback;
 
     private static string CreateAmmountCsvField(AmountField? field) =>
-        field?.Amount?.ToString(CultureInfo.InvariantCulture) ?? Fallback;
+        field?.Amount?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
 
     private static string CreateDateCsvField(DateField? field) =>
-        field?.Date?.ToString(CalendarDateFormat, CultureInfo.InvariantCulture) ?? Fallback;
+        field?.Date?.ToString(CalendarDateFormat, CultureInfo.InvariantCulture) ?? string.Empty;
 
     private static void AppendRow(StringBuilder csv, IEnumerable<string> cells)
     {

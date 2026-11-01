@@ -42,7 +42,7 @@ public sealed class FileSeededDataE2ETests : IAsyncLifetime
 
         var client = _factory.CreateClientAs(userId);
 
-        var getResponse = await client.GetAsync($"/files/{seededFile.Id}");
+        var getResponse = await client.GetAsync($"/file/{seededFile.Id}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched.Should().NotBeNull();
@@ -72,7 +72,7 @@ public sealed class FileSeededDataE2ETests : IAsyncLifetime
 
         var client = _factory.CreateClientAs(userId);
 
-        var listResponse = await client.GetAsync("/files?skip=0&take=50");
+        var listResponse = await client.GetAsync("/file?skip=0&take=50");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
         files.Should().NotBeNull();

@@ -29,7 +29,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = "text/plain",
             SizeBytes = 100,
         };
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await _client.PostAsJsonAsync("/file", record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -47,7 +47,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await _client.PostAsJsonAsync("/file", record);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -75,7 +75,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/files/{original.Id}", updated);
+        var response = await _client.PutAsJsonAsync($"/file/{original.Id}", updated);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -99,7 +99,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await _client.PostAsJsonAsync("/file", record);
         var createResult = await response.Content.ReadFromJsonAsync<CreateFileResult>();
 
         // Assert
@@ -127,7 +127,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/files/{original.Id}", updated);
+        var response = await _client.PutAsJsonAsync($"/file/{original.Id}", updated);
         var result = await response.Content.ReadFromJsonAsync<File>();
 
         // Assert
@@ -142,7 +142,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        var response = await _client.GetAsync($"/files/{created.Id}");
+        var response = await _client.GetAsync($"/file/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -159,7 +159,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
-        var response = await _client.GetAsync($"/files/{randomId}");
+        var response = await _client.GetAsync($"/file/{randomId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -169,7 +169,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetById_InvalidId_Returns404()
     {
         // Act
-        var response = await _client.GetAsync("/files/not-a-valid-id");
+        var response = await _client.GetAsync("/file/not-a-valid-id");
 
         // Assert - Returns 404 because no file exists with that ID
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -197,7 +197,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         );
 
         // Act
-        var response = await _client.GetAsync("/files");
+        var response = await _client.GetAsync("/file");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -213,13 +213,13 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        var response = await _client.DeleteAsync($"/files/{created.Id}");
+        var response = await _client.DeleteAsync($"/file/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify it's gone
-        var getResponse = await _client.GetAsync($"/files/{created.Id}");
+        var getResponse = await _client.GetAsync($"/file/{created.Id}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

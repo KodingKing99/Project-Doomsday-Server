@@ -33,7 +33,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = contentType,
             SizeBytes = sizeBytes,
         };
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await _client.PostAsJsonAsync("/file", record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -46,7 +46,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         var record = await CreateTestFile();
 
         // Act
-        var response = await _client.GetAsync($"/files/{record.Id}/content");
+        var response = await _client.GetAsync($"/file/{record.Id}/content");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -59,7 +59,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         var record = await CreateTestFile("document.pdf", "application/pdf");
 
         // Act
-        var response = await _client.GetAsync($"/files/{record.Id}/content");
+        var response = await _client.GetAsync($"/file/{record.Id}/content");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -73,7 +73,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         var record = await CreateTestFile("report.pdf", "application/pdf");
 
         // Act
-        var response = await _client.GetAsync($"/files/{record.Id}/content");
+        var response = await _client.GetAsync($"/file/{record.Id}/content");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -89,7 +89,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
-        var response = await _client.GetAsync($"/files/{randomId}/content");
+        var response = await _client.GetAsync($"/file/{randomId}/content");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

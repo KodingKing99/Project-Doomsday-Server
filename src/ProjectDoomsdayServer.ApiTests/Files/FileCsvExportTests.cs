@@ -27,7 +27,7 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<string> CreateFileAsync(ExtractionInfo? extractionInfo)
     {
         var response = await _client.PostAsJsonAsync(
-            "/files",
+            "/file",
             new CreateFileInput
             {
                 FileName = "receipt.jpg",
@@ -80,21 +80,21 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
             }
         );
 
-        var response = await _client.GetAsync($"/files/{fileId}/export/csv");
+        var response = await _client.GetAsync($"/file/{fileId}/export/csv");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("text/csv");
         var body = await response.Content.ReadAsStringAsync();
         var vendorCells =
-            "\"Joe's \"\"Diner\"\", Inc\",\"1 Main St\nSpringfield\",N/A,N/A,2024-03-05,N/A,N/A,11.5,N/A,";
+            "\"Joe's \"\"Diner\"\", Inc\",\"1 Main St\nSpringfield\",N/A,N/A,2024-03-05,,,11.5,,";
         body.Should()
             .Be(
                 Header
                     + "\r\n"
                     + vendorCells
-                    + "Burger,2,8.25,N/A,N/A,N/A\r\n"
+                    + "Burger,2,8.25,,N/A,N/A\r\n"
                     + vendorCells
-                    + "Fries,N/A,N/A,N/A,N/A,N/A\r\n"
+                    + "Fries,,,,N/A,N/A\r\n"
             );
     }
 
@@ -105,11 +105,10 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
             new ExtractionInfo { Expenses = [new Expense { VendorName = Field("Shop") }] }
         );
 
-        var response = await _client.GetAsync($"/files/{fileId}/export/csv");
+        var response = await _client.GetAsync($"/file/{fileId}/export/csv");
 
         var body = await response.Content.ReadAsStringAsync();
-        body.Should()
-            .Be(Header + "\r\n" + "Shop" + string.Concat(Enumerable.Repeat(",N/A", 14)) + "\r\n");
+        body.Should().Be(Header + "\r\n" + "Shop,N/A,N/A,N/A,,,,,,N/A,,,,N/A,N/A\r\n");
     }
 
     [Fact]
@@ -117,7 +116,7 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
     {
         var fileId = await CreateFileAsync(null);
 
-        var response = await _client.GetAsync($"/files/{fileId}/export/csv");
+        var response = await _client.GetAsync($"/file/{fileId}/export/csv");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadAsStringAsync()).Should().Be(Header + "\r\n");
@@ -126,7 +125,7 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task ExportToCsv_UnknownFile_ReturnsNotFound()
     {
-        var response = await _client.GetAsync("/files/does-not-exist/export/csv");
+        var response = await _client.GetAsync("/file/does-not-exist/export/csv");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

@@ -54,7 +54,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<File> CreateFileAsync(HttpClient client, bool withStorageKey = true)
     {
         var response = await client.PostAsJsonAsync(
-            "/files",
+            "/file",
             new CreateFileInput
             {
                 FileName = "receipt.jpg",
@@ -82,7 +82,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
 
-        var response = await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        var response = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ExtractionInfo>();
@@ -96,8 +96,8 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
 
-        await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
-        var second = await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        var second = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         second.StatusCode.Should().Be(HttpStatusCode.OK);
         (await ExtractionCallCount()).Should().Be(1);
@@ -108,7 +108,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
-        await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
         _factory
             .FileExtractionServiceSubstitute.ExtractExpenseInformationAsync(
                 Arg.Any<MemoryStream>(),
@@ -117,7 +117,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
             .Returns(_ => Task.FromResult(CreateExtraction("second")));
 
         var response = await client.PostAsync(
-            $"/files/{file.Id}/extractExpenseInfo?force=true",
+            $"/file/{file.Id}/extractExpenseInfo?force=true",
             null
         );
 
@@ -137,7 +137,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
 
         var response = await _factory
             .CreateClientAs("user-b")
-            .PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+            .PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -148,7 +148,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client, withStorageKey: false);
 
-        var response = await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        var response = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -165,8 +165,8 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
 
-        await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
-        await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         _factory.FileRecords[file.Id!].ExtractionInfo!.Expenses.Should().BeEmpty();
         (await ExtractionCallCount()).Should().Be(1);
@@ -184,7 +184,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
 
-        var response = await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        var response = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         _factory.FileRecords[file.Id!].ExtractionInfo.Should().BeNull();
@@ -195,10 +195,10 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
-        await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
         var put = await client.PutAsJsonAsync(
-            $"/files/{file.Id}",
+            $"/file/{file.Id}",
             new
             {
                 FileName = "renamed.jpg",
@@ -216,10 +216,10 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
-        await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
 
-        var single = await client.GetFromJsonAsync<File>($"/files/{file.Id}");
-        var list = await client.GetFromJsonAsync<List<File>>("/files");
+        var single = await client.GetFromJsonAsync<File>($"/file/{file.Id}");
+        var list = await client.GetFromJsonAsync<List<File>>("/file");
 
         single!.ExtractionInfo.Should().NotBeNull();
         list!.Single().ExtractionInfo.Should().NotBeNull();

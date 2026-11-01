@@ -30,7 +30,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = "text/plain",
             SizeBytes = 100,
         };
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await _client.PostAsJsonAsync("/file", record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -43,7 +43,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        var response = await _client.DeleteAsync($"/files/{created.Id}");
+        var response = await _client.DeleteAsync($"/file/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -56,7 +56,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        await _client.DeleteAsync($"/files/{created.Id}");
+        await _client.DeleteAsync($"/file/{created.Id}");
 
         // Assert - storage is called with the StorageKey, not the Id
         await _factory
@@ -72,8 +72,8 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        await _client.DeleteAsync($"/files/{created.Id}");
-        var response = await _client.GetAsync($"/files/{created.Id}");
+        await _client.DeleteAsync($"/file/{created.Id}");
+        var response = await _client.GetAsync($"/file/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -86,7 +86,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
-        var response = await _client.DeleteAsync($"/files/{randomId}");
+        var response = await _client.DeleteAsync($"/file/{randomId}");
 
         // Assert — service throws FileNotFoundException for missing files, mapped to 404
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

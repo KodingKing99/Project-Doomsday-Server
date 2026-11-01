@@ -12,14 +12,14 @@ using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 namespace ProjectDoomsdayServer.WebApi.Controllers;
 
 [ApiController]
-[Route("files")]
-public sealed class FilesController : ControllerBase
+[Route("file")]
+public sealed class FileController : ControllerBase
 {
     private readonly IFilesService _filesService;
 
     private readonly ICsvExportService _csvExportService;
 
-    public FilesController(IFilesService filesService, ICsvExportService csvExportService)
+    public FileController(IFilesService filesService, ICsvExportService csvExportService)
     {
         _filesService = filesService;
         _csvExportService = csvExportService;

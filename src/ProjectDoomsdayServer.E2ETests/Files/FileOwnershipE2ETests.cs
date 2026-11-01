@@ -34,7 +34,7 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
             ContentType = "text/plain",
             SizeBytes = 100,
         };
-        var response = await client.PostAsJsonAsync("/files", input);
+        var response = await client.PostAsJsonAsync("/file", input);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CreateFileResult>())!;
     }
@@ -50,10 +50,10 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
         var createResult = await CreateFileAsUser(userAClient);
         var fileId = createResult.File.Id;
 
-        var nonOwnerResponse = await userBClient.GetAsync($"/files/{fileId}");
+        var nonOwnerResponse = await userBClient.GetAsync($"/file/{fileId}");
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-        var ownerResponse = await userAClient.GetAsync($"/files/{fileId}");
+        var ownerResponse = await userAClient.GetAsync($"/file/{fileId}");
         ownerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -68,7 +68,7 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
         var createResult = await CreateFileAsUser(userAClient);
         var fileId = createResult.File.Id;
 
-        var nonOwnerResponse = await userBClient.GetAsync($"/files/{fileId}/content");
+        var nonOwnerResponse = await userBClient.GetAsync($"/file/{fileId}/content");
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -89,7 +89,7 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
             ContentType = "text/plain",
             SizeBytes = 200,
         };
-        var nonOwnerResponse = await userBClient.PutAsJsonAsync($"/files/{fileId}", updateRecord);
+        var nonOwnerResponse = await userBClient.PutAsJsonAsync($"/file/{fileId}", updateRecord);
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -104,7 +104,7 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
         var createResult = await CreateFileAsUser(userAClient);
         var fileId = createResult.File.Id;
 
-        var nonOwnerResponse = await userBClient.DeleteAsync($"/files/{fileId}");
+        var nonOwnerResponse = await userBClient.DeleteAsync($"/file/{fileId}");
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

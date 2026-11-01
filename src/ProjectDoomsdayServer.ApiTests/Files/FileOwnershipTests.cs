@@ -28,7 +28,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = "text/plain",
             SizeBytes = 100,
         };
-        var response = await client.PostAsJsonAsync("/files", input);
+        var response = await client.PostAsJsonAsync("/file", input);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -42,7 +42,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         var file = await CreateFileAsUser(userAClient);
 
-        var response = await userBClient.GetAsync($"/files/{file.Id}");
+        var response = await userBClient.GetAsync($"/file/{file.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -54,7 +54,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         var file = await CreateFileAsUser(userAClient);
 
-        var response = await userAClient.GetAsync($"/files/{file.Id}");
+        var response = await userAClient.GetAsync($"/file/{file.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -67,7 +67,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         var file = await CreateFileAsUser(userAClient);
 
-        var response = await userBClient.GetAsync($"/files/{file.Id}/content");
+        var response = await userBClient.GetAsync($"/file/{file.Id}/content");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -79,7 +79,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         var file = await CreateFileAsUser(userAClient);
 
-        var response = await userAClient.GetAsync($"/files/{file.Id}/content");
+        var response = await userAClient.GetAsync($"/file/{file.Id}/content");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -98,7 +98,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
             SizeBytes = 200,
         };
 
-        var response = await userBClient.PutAsJsonAsync($"/files/{file.Id}", updatedRecord);
+        var response = await userBClient.PutAsJsonAsync($"/file/{file.Id}", updatedRecord);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -116,7 +116,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
             SizeBytes = 200,
         };
 
-        var response = await userAClient.PutAsJsonAsync($"/files/{file.Id}", updatedRecord);
+        var response = await userAClient.PutAsJsonAsync($"/file/{file.Id}", updatedRecord);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -129,7 +129,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         var file = await CreateFileAsUser(userAClient);
 
-        var response = await userBClient.DeleteAsync($"/files/{file.Id}");
+        var response = await userBClient.DeleteAsync($"/file/{file.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -141,7 +141,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         var file = await CreateFileAsUser(userAClient);
 
-        var response = await userAClient.DeleteAsync($"/files/{file.Id}");
+        var response = await userAClient.DeleteAsync($"/file/{file.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -154,7 +154,7 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
 
         await CreateFileAsUser(userAClient, "user-a-file.txt");
 
-        var response = await userBClient.GetAsync("/files");
+        var response = await userBClient.GetAsync("/file");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var files = await response.Content.ReadFromJsonAsync<List<File>>();

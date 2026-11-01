@@ -8,7 +8,7 @@ import requests
 
 import uploadToS3 as upload
 
-EXTRACT_PATH = "/files/{id}/extractExpenseInfo"
+EXTRACT_PATH = "/file/{id}/extractExpenseInfo"
 
 
 def extract(auth_token, file_id, force=False):

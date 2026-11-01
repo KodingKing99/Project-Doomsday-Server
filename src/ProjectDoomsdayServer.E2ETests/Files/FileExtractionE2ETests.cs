@@ -31,7 +31,7 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     private async Task<string> CreateUploadedFileAsync(HttpClient client)
     {
         var response = await client.PostAsJsonAsync(
-            "/files",
+            "/file",
             new CreateFileInput
             {
                 FileName = "receipt.jpg",
@@ -61,9 +61,9 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
         var fileId = await CreateUploadedFileAsync(client);
 
-        var extract = await client.PostAsync($"/files/{fileId}/extractExpenseInfo", null);
+        var extract = await client.PostAsync($"/file/{fileId}/extractExpenseInfo", null);
         var extracted = await extract.Content.ReadFromJsonAsync<ExtractionInfo>();
-        var fetched = await client.GetFromJsonAsync<File>($"/files/{fileId}");
+        var fetched = await client.GetFromJsonAsync<File>($"/file/{fileId}");
 
         extract.StatusCode.Should().Be(HttpStatusCode.OK);
         fetched!.ExtractionInfo.Should().BeEquivalentTo(extracted);
@@ -76,7 +76,7 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
         var fileId = await CreateUploadedFileAsync(client);
 
-        await client.PostAsync($"/files/{fileId}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{fileId}/extractExpenseInfo", null);
 
         var document = await RawCollection().Find(new BsonDocument("_id", fileId)).SingleAsync();
         var amount = document["ExtractionInfo"]["Expenses"][0]["Total"]["Amount"];
@@ -89,14 +89,12 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     {
         var userId = E2ETestHelpers.UniqueUserId();
         var fileId = await CreateUploadedFileAsync(_factory.CreateClientAs(userId));
-        await _factory
-            .CreateClientAs(userId)
-            .PostAsync($"/files/{fileId}/extractExpenseInfo", null);
+        await _factory.CreateClientAs(userId).PostAsync($"/file/{fileId}/extractExpenseInfo", null);
 
         await using var restartedFactory = new E2EWebApplicationFactory(_infra);
         var response = await restartedFactory
             .CreateClientAs(userId)
-            .PostAsync($"/files/{fileId}/extractExpenseInfo", null);
+            .PostAsync($"/file/{fileId}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         restartedFactory.ExtractionService.CallCount.Should().Be(0);
@@ -107,10 +105,10 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     {
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
         var fileId = await CreateUploadedFileAsync(client);
-        await client.PostAsync($"/files/{fileId}/extractExpenseInfo", null);
+        await client.PostAsync($"/file/{fileId}/extractExpenseInfo", null);
 
         var put = await client.PutAsJsonAsync(
-            $"/files/{fileId}",
+            $"/file/{fileId}",
             new
             {
                 FileName = "renamed.jpg",

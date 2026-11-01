@@ -28,7 +28,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = contentType,
             SizeBytes = 100,
         };
-        await _client.PostAsJsonAsync("/files", record);
+        await _client.PostAsJsonAsync("/file", record);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange - factory is reset, no files
 
         // Act
-        var response = await _client.GetAsync("/files");
+        var response = await _client.GetAsync("/file");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -56,7 +56,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         }
 
         // Act
-        var response = await _client.GetAsync("/files");
+        var response = await _client.GetAsync("/file");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -75,7 +75,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         }
 
         // Act
-        var response = await _client.GetAsync("/files?skip=2");
+        var response = await _client.GetAsync("/file?skip=2");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -94,7 +94,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         }
 
         // Act
-        var response = await _client.GetAsync("/files?take=2");
+        var response = await _client.GetAsync("/file?take=2");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -113,7 +113,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         }
 
         // Act - Request 500 but should be clamped to 200
-        var response = await _client.GetAsync("/files?take=500");
+        var response = await _client.GetAsync("/file?take=500");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -132,7 +132,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         await CreateTestFile("second.txt");
 
         // Act
-        var response = await _client.GetAsync("/files");
+        var response = await _client.GetAsync("/file");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

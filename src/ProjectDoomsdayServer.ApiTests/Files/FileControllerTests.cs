@@ -11,12 +11,12 @@ using Xunit;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
-public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
+public class FileControllerTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public FilesControllerTests(CustomWebApplicationFactory factory)
+    public FileControllerTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _factory.Reset();
@@ -35,7 +35,7 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/files", record);
+        var response = await _client.PostAsJsonAsync("/file", record);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -60,7 +60,7 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user123");
 
         // Act
-        var response = await client.PostAsJsonAsync("/files", record);
+        var response = await client.PostAsJsonAsync("/file", record);
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -82,7 +82,7 @@ public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClientAs("user456");
 
         // Act
-        var response = await client.PostAsJsonAsync("/files", record);
+        var response = await client.PostAsJsonAsync("/file", record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
 

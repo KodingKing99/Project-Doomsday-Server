@@ -77,16 +77,16 @@ def create_file_metadata(file_path):
 
 
 def post_file(auth_token, file_metadata):
-    """POST to /files to create file metadata and get upload URL."""
+    """POST to /file to create file metadata and get upload URL."""
     headers = {"Authorization": f"Bearer {auth_token}"}
 
-    print(f"\nPOSTing file metadata to {BASE_URL}/files...")
+    print(f"\nPOSTing file metadata to {BASE_URL}/file...")
     response = requests.post(
-        f"{BASE_URL}/files", json=file_metadata, headers=headers, verify=False
+        f"{BASE_URL}/file", json=file_metadata, headers=headers, verify=False
     )
 
     if response.status_code != 201:
-        print(f"Error: POST /files returned {response.status_code}")
+        print(f"Error: POST /file returned {response.status_code}")
         print(f"Response: {response.text}")
         sys.exit(1)
 

@@ -32,7 +32,7 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
             ContentType = "text/plain",
             SizeBytes = 1024,
         };
-        var createResponse = await _client.PostAsJsonAsync("/files", record);
+        var createResponse = await _client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
@@ -42,14 +42,14 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         var fileId = createdRecord.Id;
 
         // 2. List files -> verify file appears
-        var listResponse = await _client.GetAsync("/files");
+        var listResponse = await _client.GetAsync("/file");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
         files.Should().NotBeNull();
         files.Should().Contain(f => f.Id == fileId);
 
         // 3. Get file by ID -> verify metadata
-        var getResponse = await _client.GetAsync($"/files/{fileId}");
+        var getResponse = await _client.GetAsync($"/file/{fileId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetchedRecord = await getResponse.Content.ReadFromJsonAsync<File>();
         fetchedRecord.Should().NotBeNull();
@@ -64,11 +64,11 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
             SizeBytes = 2048,
             Metadata = { ["environment"] = "test", ["version"] = "1.0" },
         };
-        var updateResponse = await _client.PutAsJsonAsync($"/files/{fileId}", updatedRecord);
+        var updateResponse = await _client.PutAsJsonAsync($"/file/{fileId}", updatedRecord);
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // Verify update was applied
-        var getAfterUpdateResponse = await _client.GetAsync($"/files/{fileId}");
+        var getAfterUpdateResponse = await _client.GetAsync($"/file/{fileId}");
         var afterUpdate = await getAfterUpdateResponse.Content.ReadFromJsonAsync<File>();
         afterUpdate.Should().NotBeNull();
         afterUpdate!.FileName.Should().Be("integration-test-updated.txt");
@@ -78,11 +78,11 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         afterUpdate.Metadata["version"].Should().Be("1.0");
 
         // 5. Delete file -> verify 204
-        var deleteResponse = await _client.DeleteAsync($"/files/{fileId}");
+        var deleteResponse = await _client.DeleteAsync($"/file/{fileId}");
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // 6. Get file by ID -> verify 404
-        var getAfterDeleteResponse = await _client.GetAsync($"/files/{fileId}");
+        var getAfterDeleteResponse = await _client.GetAsync($"/file/{fileId}");
         getAfterDeleteResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -98,13 +98,13 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
         };
 
         // Act - Create file record
-        var createResponse = await _client.PostAsJsonAsync("/files", record);
+        var createResponse = await _client.PostAsJsonAsync("/file", record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
 
         // Download file (content comes from mocked storage)
-        var downloadResponse = await _client.GetAsync($"/files/{createResult!.File.Id}/content");
+        var downloadResponse = await _client.GetAsync($"/file/{createResult!.File.Id}/content");
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }
