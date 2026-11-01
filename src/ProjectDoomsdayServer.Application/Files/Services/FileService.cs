@@ -9,13 +9,13 @@ using File = ProjectDoomsdayServer.Domain.DB_Models.File;
 
 namespace ProjectDoomsdayServer.Application.Files.Services;
 
-public sealed class FilesService : IFilesService
+public sealed class FileService : IFileService
 {
     private readonly IFileRepository _repo;
     private readonly IFileStorage _storage;
     private readonly IFileTextExtractionService _fileExtractionService;
 
-    public FilesService(
+    public FileService(
         IFileRepository repo,
         IFileStorage storage,
         IFileTextExtractionService fileExtractionService

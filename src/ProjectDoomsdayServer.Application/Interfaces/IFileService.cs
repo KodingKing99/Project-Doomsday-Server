@@ -9,7 +9,7 @@ namespace ProjectDoomsdayServer.Application.Interfaces;
 /// <summary>
 /// Orchestrates file operations, enforcing per-user ownership on all reads and writes.
 /// </summary>
-public interface IFilesService
+public interface IFileService
 {
     /// <summary>
     /// Creates a new file record, generates the storage key, and returns a presigned upload URL.

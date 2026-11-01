@@ -22,7 +22,7 @@ builder.Services.AddSingleton<IFileStorage, S3FileStorage>();
 builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileTextExtractionService, FileExtractionService>();
-builder.Services.AddScoped<IFilesService, FilesService>();
+builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICsvExportService, CsvExportService>();
 
 #region AWS

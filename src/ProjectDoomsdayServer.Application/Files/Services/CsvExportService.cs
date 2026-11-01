@@ -30,11 +30,11 @@ public sealed class CsvExportService : ICsvExportService
         "LineItem.ExpenseRow",
     ];
 
-    private readonly IFilesService _filesService;
+    private readonly IFileService _fileService;
 
-    public CsvExportService(IFilesService filesService)
+    public CsvExportService(IFileService fileService)
     {
-        _filesService = filesService;
+        _fileService = fileService;
     }
 
     public async Task<string> ToCsv(
@@ -42,7 +42,7 @@ public sealed class CsvExportService : ICsvExportService
         CancellationToken cancellationToken
     )
     {
-        var file = await _filesService.GetAsync(
+        var file = await _fileService.GetAsync(
             new GetFileRequest
             {
                 AuthenticatedUserId = request.AuthenticatedUserId,

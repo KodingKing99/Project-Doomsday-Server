@@ -16,7 +16,7 @@ dotnet csharpier format .                              # Format code (CSharpier)
 .NET 9 hexagonal/clean architecture. Dependency flow (outside-in): `WebApi → Infrastructure → Application → Domain`
 
 - **Domain** — Pure models. `File` entity, config POCOs (`MongoDbConfig`, `S3Config`).
-- **Application** — Business logic. `IFilesService`/`FilesService` orchestrates operations. Ports: `IFileStorage`, `IFileRepository`.
+- **Application** — Business logic. `IFileService`/`FileService` orchestrates operations. Ports: `IFileStorage`, `IFileRepository`.
 - **Infrastructure** — Adapters: `MongoDbFileRepository`, `S3FileStorage`, `LocalFileStorage`, `InMemoryFileRepository`. DI via `AddInfrastructureServices()`.
 - **WebApi** — ASP.NET Core entry point. `Program.cs` is the DI composition root.
 

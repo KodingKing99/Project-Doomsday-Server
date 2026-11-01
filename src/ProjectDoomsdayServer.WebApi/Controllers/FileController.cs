@@ -15,13 +15,13 @@ namespace ProjectDoomsdayServer.WebApi.Controllers;
 [Route("file")]
 public sealed class FileController : ControllerBase
 {
-    private readonly IFilesService _filesService;
+    private readonly IFileService _fileService;
 
     private readonly ICsvExportService _csvExportService;
 
-    public FileController(IFilesService filesService, ICsvExportService csvExportService)
+    public FileController(IFileService fileService, ICsvExportService csvExportService)
     {
-        _filesService = filesService;
+        _fileService = fileService;
         _csvExportService = csvExportService;
     }
 
@@ -40,7 +40,7 @@ public sealed class FileController : ControllerBase
         {
             return BadRequest("User not found");
         }
-        var result = await _filesService.CreateAsync(
+        var result = await _fileService.CreateAsync(
             new CreateFileRequest { Input = record, AuthenticatedUserId = userId },
             cancellationToken
         );
@@ -66,7 +66,7 @@ public sealed class FileController : ControllerBase
         if (string.IsNullOrEmpty(record.FileName))
             return BadRequest("FileName is required.");
 
-        var result = await _filesService.UpdateAsync(
+        var result = await _fileService.UpdateAsync(
             new UpdateFileRequest
             {
                 Id = id,
@@ -100,7 +100,7 @@ public sealed class FileController : ControllerBase
         }
         take = Math.Clamp(take, 1, 200);
         return Ok(
-            await _filesService.ListAsync(
+            await _fileService.ListAsync(
                 new ListFileRequest
                 {
                     AuthenticatedUserId = userId,
@@ -125,7 +125,7 @@ public sealed class FileController : ControllerBase
         {
             return BadRequest("User must be authenticated");
         }
-        var file = await _filesService.GetAsync(
+        var file = await _fileService.GetAsync(
             new GetFileRequest { Id = id, AuthenticatedUserId = userId },
             cancellationToken
         );
@@ -144,12 +144,12 @@ public sealed class FileController : ControllerBase
         if (userId is null)
             return BadRequest("User must be authenticated");
 
-        var fileMetadata = await _filesService.GetAsync(
+        var fileMetadata = await _fileService.GetAsync(
             new GetFileRequest { Id = id, AuthenticatedUserId = userId },
             cancellationToken
         );
 
-        var stream = await _filesService.DownloadAsync(
+        var stream = await _fileService.DownloadAsync(
             new DownloadFileRequest { Id = id, AuthenticatedUserId = userId },
             cancellationToken
         );
@@ -168,7 +168,7 @@ public sealed class FileController : ControllerBase
         if (userId is null)
             return BadRequest("User must be authenticated");
 
-        await _filesService.DeleteAsync(
+        await _fileService.DeleteAsync(
             new DeleteFileRequest { Id = id, AuthenticatedUserId = userId },
             cancellationToken
         );
@@ -190,7 +190,7 @@ public sealed class FileController : ControllerBase
         var userId = User.FindFirstValue("sub");
         if (userId is null)
             return BadRequest("User must be authenticated");
-        var result = await _filesService.ExtractExpenseInformationAsync(
+        var result = await _fileService.ExtractExpenseInformationAsync(
             new ExtractExpenseImageInfoRequest
             {
                 AuthenticatedUserId = userId,
