@@ -28,13 +28,10 @@ public static class TextractExpenseMapper
         "MMM. d, yyyy",
     ];
 
-    public static ExtractedExpenseInfo Map(
-        AnalyzeExpenseResponse response,
-        DateTimeOffset extractedAtUtc
-    )
+    public static ExtractionInfo Map(AnalyzeExpenseResponse response, DateTimeOffset extractedAtUtc)
     {
         var documents = response.ExpenseDocuments ?? [];
-        return new ExtractedExpenseInfo
+        return new ExtractionInfo
         {
             ExtractedAtUtc = extractedAtUtc,
             Source = SourceName,
@@ -155,16 +152,16 @@ public static class TextractExpenseMapper
     private static ExtractedField MapField(ExpenseField field) =>
         ApplyCommon(new ExtractedField(), field);
 
-    private static AmmountField MapAmountField(ExpenseField field)
+    private static AmountField MapAmountField(ExpenseField field)
     {
-        var mapped = ApplyCommon(new AmmountField(), field);
+        var mapped = ApplyCommon(new AmountField(), field);
         mapped.Amount = ParseAmount(mapped.Text);
         return mapped;
     }
 
-    private static ExtractedDateField MapDateField(ExpenseField field)
+    private static DateField MapDateField(ExpenseField field)
     {
-        var mapped = ApplyCommon(new ExtractedDateField(), field);
+        var mapped = ApplyCommon(new DateField(), field);
         mapped.Date = ParseDate(mapped.Text);
         return mapped;
     }

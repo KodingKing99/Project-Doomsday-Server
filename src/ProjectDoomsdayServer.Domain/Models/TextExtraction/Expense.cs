@@ -7,11 +7,11 @@ public sealed class Expense
     public ExtractedField? VendorAddress { get; set; }
     public ExtractedField? VendorPhone { get; set; }
     public ExtractedField? ReceiptId { get; set; }
-    public ExtractedDateField? ReceiptDate { get; set; }
-    public AmmountField? Subtotal { get; set; }
-    public AmmountField? Tax { get; set; }
-    public AmmountField? Total { get; set; }
-    public AmmountField? AmountPaid { get; set; }
+    public DateField? ReceiptDate { get; set; }
+    public AmountField? Subtotal { get; set; }
+    public AmountField? Tax { get; set; }
+    public AmountField? Total { get; set; }
+    public AmountField? AmountPaid { get; set; }
     public List<ExtractedField> SummaryFields { get; set; } = new();
     public List<LineItem> LineItems { get; set; } = new();
 }

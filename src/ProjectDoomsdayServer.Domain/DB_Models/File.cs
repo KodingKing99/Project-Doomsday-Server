@@ -15,5 +15,5 @@ public sealed class File
     public DateTimeOffset CreatedAtUtc { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public Dictionary<string, string> Metadata { get; init; } = new();
-    public ExtractedExpenseInfo? ExtractedExpenseInfo { get; set; }
+    public ExtractionInfo? ExtractedExpenseInfo { get; set; }
 }

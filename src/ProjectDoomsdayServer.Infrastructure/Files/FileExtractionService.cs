@@ -16,7 +16,7 @@ public sealed class FileExtractionService : IFileTextExtractionService
         _timeProvider = timeProvider;
     }
 
-    public async Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
+    public async Task<ExtractionInfo> ExtractExpenseInformationAsync(
         MemoryStream stream,
         CancellationToken cancellationToken
     )

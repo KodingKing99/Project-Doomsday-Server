@@ -56,7 +56,7 @@ public interface IFilesService
     /// or when <see cref="ExtractExpenseImageInfoRequest.Force"/> is set.
     /// Throws <see cref="FileRecordNotFoundException"/> if missing, not owned, or has no storage key.
     /// </summary>
-    Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
+    Task<ExtractionInfo> ExtractExpenseInformationAsync(
         ExtractExpenseImageInfoRequest extractExpenseImageInfoRequest,
         CancellationToken cancellationToken
     );

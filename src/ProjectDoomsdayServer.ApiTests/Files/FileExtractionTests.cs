@@ -29,7 +29,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
             .Returns(_ => Task.FromResult(CreateExtraction("first")));
     }
 
-    private static ExtractedExpenseInfo CreateExtraction(string vendorName) =>
+    private static ExtractionInfo CreateExtraction(string vendorName) =>
         new()
         {
             ExtractedAtUtc = DateTimeOffset.UtcNow,
@@ -41,7 +41,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
                 {
                     ExpenseIndex = 1,
                     VendorName = new ExtractedField { Type = "VENDOR_NAME", Text = vendorName },
-                    Total = new AmmountField
+                    Total = new AmountField
                     {
                         Type = "TOTAL",
                         Text = "11.52",
@@ -85,7 +85,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var response = await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<ExtractedExpenseInfo>();
+        var body = await response.Content.ReadFromJsonAsync<ExtractionInfo>();
         body!.Expenses.Single().Total!.Amount.Should().Be(11.52m);
         _factory.FileRecords[file.Id!].ExtractedExpenseInfo.Should().NotBeNull();
     }
@@ -161,7 +161,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
                 Arg.Any<MemoryStream>(),
                 Arg.Any<CancellationToken>()
             )
-            .Returns(_ => Task.FromResult(new ExtractedExpenseInfo { Source = "test" }));
+            .Returns(_ => Task.FromResult(new ExtractionInfo { Source = "test" }));
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
 

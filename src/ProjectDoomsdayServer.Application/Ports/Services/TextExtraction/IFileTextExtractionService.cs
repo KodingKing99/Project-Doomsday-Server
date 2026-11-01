@@ -10,7 +10,7 @@ public interface IFileTextExtractionService
     /// <param name="stream">The document bytes.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The structured extraction result; <c>Expenses</c> is empty when nothing was found.</returns>
-    Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
+    Task<ExtractionInfo> ExtractExpenseInformationAsync(
         MemoryStream stream,
         CancellationToken cancellationToken
     );

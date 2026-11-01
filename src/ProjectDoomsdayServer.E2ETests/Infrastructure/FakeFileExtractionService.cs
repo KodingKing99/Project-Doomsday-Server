@@ -10,7 +10,7 @@ public sealed class FakeFileExtractionService : IFileTextExtractionService
 
     public int CallCount => _callCount;
 
-    public Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
+    public Task<ExtractionInfo> ExtractExpenseInformationAsync(
         MemoryStream stream,
         CancellationToken cancellationToken
     )
@@ -19,7 +19,7 @@ public sealed class FakeFileExtractionService : IFileTextExtractionService
         return Task.FromResult(CreateSample());
     }
 
-    public static ExtractedExpenseInfo CreateSample() =>
+    public static ExtractionInfo CreateSample() =>
         new()
         {
             ExtractedAtUtc = new DateTimeOffset(2026, 9, 23, 17, 4, 11, TimeSpan.Zero),
@@ -36,13 +36,13 @@ public sealed class FakeFileExtractionService : IFileTextExtractionService
                         Text = "McDonald's",
                         Confidence = 99.99,
                     },
-                    ReceiptDate = new ExtractedDateField
+                    ReceiptDate = new DateField
                     {
                         Type = "INVOICE_RECEIPT_DATE",
                         Text = "2008-06-22",
                         Date = new DateOnly(2008, 6, 22),
                     },
-                    Total = new AmmountField
+                    Total = new AmountField
                     {
                         Type = "TOTAL",
                         Text = "11.52",
@@ -73,7 +73,7 @@ public sealed class FakeFileExtractionService : IFileTextExtractionService
                         {
                             GroupIndex = 1,
                             Item = new ExtractedField { Type = "ITEM", Text = "HOTCAKES" },
-                            Price = new AmmountField
+                            Price = new AmountField
                             {
                                 Type = "PRICE",
                                 Text = "2.29",

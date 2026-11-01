@@ -170,11 +170,11 @@ public sealed class FilesController : ControllerBase
 
     [HttpPost("{id}/extractExpenseInfo")]
     [Authorize]
-    [ProducesResponseType<ExtractedExpenseInfo>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ExtractionInfo>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<ExtractedExpenseInfo>> Extract(
+    public async Task<ActionResult<ExtractionInfo>> Extract(
         string id,
         [FromQuery] bool force = false,
         CancellationToken cancellationToken = default

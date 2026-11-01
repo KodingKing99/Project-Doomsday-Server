@@ -119,7 +119,7 @@ public sealed class FilesService : IFilesService
         return await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
     }
 
-    public async Task<ExtractedExpenseInfo> ExtractExpenseInformationAsync(
+    public async Task<ExtractionInfo> ExtractExpenseInformationAsync(
         ExtractExpenseImageInfoRequest request,
         CancellationToken cancellationToken
     )

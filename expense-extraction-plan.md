@@ -33,16 +33,16 @@ It also catches the test suites up: **ApiTests and E2ETests currently do not com
 ### 0. Green baseline (own commit)
 - Add `using ProjectDoomsdayServer.Application.Files.Results;` to the failing ApiTests/E2ETests files (`FileMetadataTests`, `FileDeleteTests`, `FileDownloadTests`, `FileOwnershipTests`, `FilesControllerTests`, `FileCrudIntegrationTests`, `FileOwnershipE2ETests`, …).
 - Fix the `CS8604` null-key warning in `CustomWebApplicationFactory.UpdateAsync` substitute.
-- Replace `IFileExtractionService` with an NSubstitute in `CustomWebApplicationFactory` and a fake in `E2EWebApplicationFactory` so neither needs AWS credentials.
+- Replace `IFileTextExtractionService` with an NSubstitute in `CustomWebApplicationFactory` and a fake in `E2EWebApplicationFactory` so neither needs AWS credentials.
 - `dotnet test` ApiTests + E2ETests pass. Commit: `test: fix broken test build after CreateFileResult move`.
 
 ### 1. Domain model — `ProjectDoomsdayServer.Domain`
-New folder `Models/Extraction/` (POCOs, no Bson attributes):
+New folder `Models/TextExtraction/` (POCOs, no Bson attributes):
 - `ExtractedExpenseInfo { ExtractedAtUtc, Source, RawText, List<Expense> Expenses }`
 - `Expense { ExpenseIndex, VendorName, VendorAddress, VendorPhone, ReceiptId, ReceiptDate, Subtotal, Tax, Total, AmountPaid, List<ExtractedField> SummaryFields, List<LineItem> LineItems }`
 - `LineItem { GroupIndex, Item, Quantity, UnitPrice, Price, ProductCode, ExpenseRow, List<ExtractedField> OtherFields }`
 - `ExtractedField { Type, Label?, LabelConfidence?, Text, Confidence, Geometry? }`
-- `ExtractedAmountField : ExtractedField { decimal? Amount }`, `ExtractedDateField : ExtractedField { DateOnly? Date }`
+- `AmountField : ExtractedField { decimal? Amount }`, `DateField : ExtractedField { DateOnly? Date }`
 - `Geometry { PageNumber, BoundingBox, List<Point> Polygon }`, `BoundingBox { Left, Top, Width, Height }`, `Point { X, Y }`
 
 Add `public ExtractedExpenseInfo? ExtractedExpenseInfo { get; set; }` to `Domain/DB_Models/File.cs`.
@@ -56,7 +56,7 @@ Add `public ExtractedExpenseInfo? ExtractedExpenseInfo { get; set; }` to `Domain
 - `FileExtractionService` returns `ExtractedExpenseInfo` via the mapper (fixes the concatenated-JSON bug). Inject `TimeProvider` for `ExtractedAtUtc`.
 
 ### 3. Ports & Application
-- `IFileExtractionService.ExtractExpenseInformationAsync` → `Task<ExtractedExpenseInfo>`; update XML doc.
+- `IFileTextExtractionService.ExtractExpenseInformationAsync` → `Task<ExtractedExpenseInfo>`; update XML doc.
 - `ExtractExpenseImageInfoRequest` gains `bool Force`.
 - `FilesService.ExtractExpenseInformationAsync` → `Task<ExtractedExpenseInfo>`:
   1. Ownership / StorageKey checks (unchanged).
@@ -68,7 +68,7 @@ Add `public ExtractedExpenseInfo? ExtractedExpenseInfo { get; set; }` to `Domain
 
 ### 4. Persistence — `MongoDbFileRepository`
 - In the static class map setup, register `Decimal128` representation for `decimal`/`decimal?` (e.g. `BsonSerializer.RegisterSerializer(new DecimalSerializer(BsonType.Decimal128))` and the nullable equivalent) and a `DateOnly` serializer if the driver version needs one. Domain stays attribute-free.
-- Register class maps for `ExtractedAmountField` / `ExtractedDateField` if polymorphic discriminators appear (they are only ever used via their concrete property types, so no discriminator is needed — verify in E2E).
+- Register class maps for `AmountField` / `DateField` if polymorphic discriminators appear (they are only ever used via their concrete property types, so no discriminator is needed — verify in E2E).
 
 ### 5. WebApi — `FilesController.Extract`
 - Accept `[FromQuery] bool force = false`, pass through.
@@ -97,7 +97,7 @@ The `.context/mcdonalds_receipt_output_json.json` capture is double-encoded (`Mc
 - Empty response → `Expenses` empty; two `ExpenseDocuments` → two Expenses.
 - Amount parsing edge cases (`"$1,234.50"`, `"abc"`, `""`).
 
-### ApiTests (mocked `IFileExtractionService`, no Docker)
+### ApiTests (mocked `IFileTextExtractionService`, no Docker)
 - Extract returns 200 with typed body and stores it on the record.
 - Second call returns cached value; service received exactly one call.
 - `?force=true` calls service again and overwrites.

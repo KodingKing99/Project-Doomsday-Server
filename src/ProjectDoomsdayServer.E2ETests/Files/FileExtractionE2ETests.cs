@@ -62,7 +62,7 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
         var fileId = await CreateUploadedFileAsync(client);
 
         var extract = await client.PostAsync($"/files/{fileId}/extractExpenseInfo", null);
-        var extracted = await extract.Content.ReadFromJsonAsync<ExtractedExpenseInfo>();
+        var extracted = await extract.Content.ReadFromJsonAsync<ExtractionInfo>();
         var fetched = await client.GetFromJsonAsync<File>($"/files/{fileId}");
 
         extract.StatusCode.Should().Be(HttpStatusCode.OK);

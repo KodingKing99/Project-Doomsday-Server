@@ -1,6 +1,6 @@
 namespace ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
-public sealed class ExtractedExpenseInfo
+public sealed class ExtractionInfo
 {
     public DateTimeOffset ExtractedAtUtc { get; set; }
     public string Source { get; set; } = default!;
