@@ -38,33 +38,33 @@ It also catches the test suites up: **ApiTests and E2ETests currently do not com
 
 ### 1. Domain model — `ProjectDoomsdayServer.Domain`
 New folder `Models/TextExtraction/` (POCOs, no Bson attributes):
-- `ExtractedExpenseInfo { ExtractedAtUtc, Source, RawText, List<Expense> Expenses }`
+- `ExtractionInfo { ExtractedAtUtc, Source, RawText, List<Expense> Expenses }`
 - `Expense { ExpenseIndex, VendorName, VendorAddress, VendorPhone, ReceiptId, ReceiptDate, Subtotal, Tax, Total, AmountPaid, List<ExtractedField> SummaryFields, List<LineItem> LineItems }`
 - `LineItem { GroupIndex, Item, Quantity, UnitPrice, Price, ProductCode, ExpenseRow, List<ExtractedField> OtherFields }`
 - `ExtractedField { Type, Label?, LabelConfidence?, Text, Confidence, Geometry? }`
 - `AmountField : ExtractedField { decimal? Amount }`, `DateField : ExtractedField { DateOnly? Date }`
 - `Geometry { PageNumber, BoundingBox, List<Point> Polygon }`, `BoundingBox { Left, Top, Width, Height }`, `Point { X, Y }`
 
-Add `public ExtractedExpenseInfo? ExtractedExpenseInfo { get; set; }` to `Domain/DB_Models/File.cs`.
+Add `public ExtractionInfo? ExtractionInfo { get; set; }` to `Domain/DB_Models/File.cs`.
 
 ### 2. Mapper — `ProjectDoomsdayServer.Infrastructure`
-- `Files/TextractExpenseMapper.cs`: pure static `ExtractedExpenseInfo Map(AnalyzeExpenseResponse response, DateTimeOffset extractedAtUtc)`.
+- `Files/TextractExpenseMapper.cs`: pure static `ExtractionInfo Map(AnalyzeExpenseResponse response, DateTimeOffset extractedAtUtc)`.
   - `RawText` = `LINE` block texts from every `ExpenseDocument.Blocks`, `"\n"`-joined.
   - Typed properties per the mapping table in the data reference; highest-confidence wins on duplicates; all summary fields kept in `SummaryFields`.
   - Flatten `LineItemGroups` → `LineItems` with `GroupIndex`.
   - Amount parsing: strip currency symbols/commas/whitespace, `decimal.TryParse` invariant → `null` on failure. Date parsing: `DateOnly.TryParseExact` over a small format list, invariant → `null` on failure.
-- `FileExtractionService` returns `ExtractedExpenseInfo` via the mapper (fixes the concatenated-JSON bug). Inject `TimeProvider` for `ExtractedAtUtc`.
+- `FileExtractionService` returns `ExtractionInfo` via the mapper (fixes the concatenated-JSON bug). Inject `TimeProvider` for `ExtractedAtUtc`.
 
 ### 3. Ports & Application
-- `IFileTextExtractionService.ExtractExpenseInformationAsync` → `Task<ExtractedExpenseInfo>`; update XML doc.
+- `IFileTextExtractionService.ExtractExpenseInformationAsync` → `Task<ExtractionInfo>`; update XML doc.
 - `ExtractExpenseImageInfoRequest` gains `bool Force`.
-- `FilesService.ExtractExpenseInformationAsync` → `Task<ExtractedExpenseInfo>`:
+- `FilesService.ExtractExpenseInformationAsync` → `Task<ExtractionInfo>`:
   1. Ownership / StorageKey checks (unchanged).
-  2. If `file.ExtractedExpenseInfo is not null && !request.Force` → return it.
-  3. Read stream (use `CopyToAsync` with the cancellation token), call extraction service, set `file.ExtractedExpenseInfo`, `UpdatedAtUtc`, `_repo.UpdateAsync`, return.
+  2. If `file.ExtractionInfo is not null && !request.Force` → return it.
+  3. Read stream (use `CopyToAsync` with the cancellation token), call extraction service, set `file.ExtractionInfo`, `UpdatedAtUtc`, `_repo.UpdateAsync`, return.
   4. Exceptions propagate; nothing saved.
 - `IFilesService` signature + XML doc updated.
-- `FilesService.UpdateAsync` is unchanged — it already copies only client-mutable fields, so `ExtractedExpenseInfo` on the loaded record survives. Add a test to lock this in.
+- `FilesService.UpdateAsync` is unchanged — it already copies only client-mutable fields, so `ExtractionInfo` on the loaded record survives. Add a test to lock this in.
 
 ### 4. Persistence — `MongoDbFileRepository`
 - In the static class map setup, register `Decimal128` representation for `decimal`/`decimal?` (e.g. `BsonSerializer.RegisterSerializer(new DecimalSerializer(BsonType.Decimal128))` and the nullable equivalent) and a `DateOnly` serializer if the driver version needs one. Domain stays attribute-free.
@@ -72,7 +72,7 @@ Add `public ExtractedExpenseInfo? ExtractedExpenseInfo { get; set; }` to `Domain
 
 ### 5. WebApi — `FilesController.Extract`
 - Accept `[FromQuery] bool force = false`, pass through.
-- Return `ActionResult<ExtractedExpenseInfo>`; change to `[ProducesResponseType<ExtractedExpenseInfo>(StatusCodes.Status200OK)]` (keep 400/401/404).
+- Return `ActionResult<ExtractionInfo>`; change to `[ProducesResponseType<ExtractionInfo>(StatusCodes.Status200OK)]` (keep 400/401/404).
 
 ### 6. Docs & tracking
 - Keep [docs/extracted-expense-info.md](docs/extracted-expense-info.md) in sync with the final model.
@@ -104,11 +104,11 @@ The `.context/mcdonalds_receipt_output_json.json` capture is double-encoded (`Mc
 - Other user's file → 404; no StorageKey → 404.
 - Zero expenses stored as `Expenses: []` and cached.
 - Service throws → record unchanged.
-- `PUT /files/{id}` after extraction keeps `ExtractedExpenseInfo`.
-- `GET /files/{id}` and `GET /files` include `ExtractedExpenseInfo`.
+- `PUT /files/{id}` after extraction keeps `ExtractionInfo`.
+- `GET /files/{id}` and `GET /files` include `ExtractionInfo`.
 
 ### E2ETests (real Mongo + MinIO, faked extraction service)
-- Extract → re-GET returns identical `ExtractedExpenseInfo` (full round-trip incl. Geometry).
+- Extract → re-GET returns identical `ExtractionInfo` (full round-trip incl. Geometry).
 - Amounts stored as `Decimal128` in Mongo (query raw BSON).
 - Cache hit after app restart / new factory (persisted, not in-memory).
 - PUT after extract preserves the subdocument in Mongo.
@@ -123,7 +123,7 @@ Live Textract. Add a manual script alongside `scripts/uploadToS3.py` that upload
 2. `dotnet test --filter "FullyQualifiedName~UnitTests" --verbosity minimal 2>&1 | head -n 150`
 3. `dotnet test --filter "FullyQualifiedName~ApiTests" --verbosity minimal 2>&1 | head -n 150`
 4. `dotnet test --filter "FullyQualifiedName~E2ETests" --verbosity minimal 2>&1 | head -n 150` (Docker)
-5. Manual: run the API against dev AWS, upload the McDonald's image, `POST /files/{id}/extractExpenseInfo` twice (second returns instantly, no Textract call in CloudWatch), inspect the document in Mongo (`ExtractedExpenseInfo.Expenses[0].Total.Amount` is `NumberDecimal("11.52")`).
+5. Manual: run the API against dev AWS, upload the McDonald's image, `POST /files/{id}/extractExpenseInfo` twice (second returns instantly, no Textract call in CloudWatch), inspect the document in Mongo (`ExtractionInfo.Expenses[0].Total.Amount` is `NumberDecimal("11.52")`).
 
 ## Known limitations carried forward
 See [docs/extracted-expense-info.md § Known limitations](docs/extracted-expense-info.md#known-limitations-deferred): lost-update race on full-document replace, cache assumes immutable bytes, list payload includes Geometry, no embeddings yet.

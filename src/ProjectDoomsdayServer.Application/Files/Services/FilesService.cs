@@ -129,8 +129,8 @@ public sealed class FilesService : IFilesService
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
         if (file.StorageKey is null)
             throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
-        if (file.ExtractedExpenseInfo is not null && !request.Force)
-            return file.ExtractedExpenseInfo;
+        if (file.ExtractionInfo is not null && !request.Force)
+            return file.ExtractionInfo;
 
         using var stream = await _storage.OpenReadAsync(file.StorageKey, cancellationToken);
         using var memoryStream = new MemoryStream();
@@ -140,7 +140,7 @@ public sealed class FilesService : IFilesService
             cancellationToken
         );
 
-        file.ExtractedExpenseInfo = extracted;
+        file.ExtractionInfo = extracted;
         file.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await _repo.UpdateAsync(file, cancellationToken);
         return extracted;

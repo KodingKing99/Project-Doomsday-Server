@@ -87,7 +87,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ExtractionInfo>();
         body!.Expenses.Single().Total!.Amount.Should().Be(11.52m);
-        _factory.FileRecords[file.Id!].ExtractedExpenseInfo.Should().NotBeNull();
+        _factory.FileRecords[file.Id!].ExtractionInfo.Should().NotBeNull();
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         (await ExtractionCallCount()).Should().Be(2);
         _factory
             .FileRecords[file.Id!]
-            .ExtractedExpenseInfo!.Expenses.Single()
+            .ExtractionInfo!.Expenses.Single()
             .VendorName!.Text.Should()
             .Be("second");
     }
@@ -168,7 +168,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
         await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
 
-        _factory.FileRecords[file.Id!].ExtractedExpenseInfo!.Expenses.Should().BeEmpty();
+        _factory.FileRecords[file.Id!].ExtractionInfo!.Expenses.Should().BeEmpty();
         (await ExtractionCallCount()).Should().Be(1);
     }
 
@@ -187,11 +187,11 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var response = await client.PostAsync($"/files/{file.Id}/extractExpenseInfo", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-        _factory.FileRecords[file.Id!].ExtractedExpenseInfo.Should().BeNull();
+        _factory.FileRecords[file.Id!].ExtractionInfo.Should().BeNull();
     }
 
     [Fact]
-    public async Task Put_AfterExtraction_KeepsExtractedExpenseInfo()
+    public async Task Put_AfterExtraction_KeepsExtractionInfo()
     {
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
@@ -208,11 +208,11 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         );
 
         put.StatusCode.Should().Be(HttpStatusCode.OK);
-        _factory.FileRecords[file.Id!].ExtractedExpenseInfo.Should().NotBeNull();
+        _factory.FileRecords[file.Id!].ExtractionInfo.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task GetAndList_IncludeExtractedExpenseInfo()
+    public async Task GetAndList_IncludeExtractionInfo()
     {
         var client = _factory.CreateClientAs("user-a");
         var file = await CreateFileAsync(client);
@@ -221,7 +221,7 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         var single = await client.GetFromJsonAsync<File>($"/files/{file.Id}");
         var list = await client.GetFromJsonAsync<List<File>>("/files");
 
-        single!.ExtractedExpenseInfo.Should().NotBeNull();
-        list!.Single().ExtractedExpenseInfo.Should().NotBeNull();
+        single!.ExtractionInfo.Should().NotBeNull();
+        list!.Single().ExtractionInfo.Should().NotBeNull();
     }
 }

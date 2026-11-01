@@ -2,7 +2,7 @@
 
 What the server stores on a **File** after running expense extraction (AWS Textract `AnalyzeExpense`). Vocabulary follows [CONTEXT.md](../CONTEXT.md); the storage decision is recorded in [ADR 0001](adr/0001-extracted-expense-info-is-a-server-owned-subdocument.md).
 
-- Lives at `File.ExtractedExpenseInfo` in the `files` Mongo collection (`null` until extraction has run).
+- Lives at `File.ExtractionInfo` in the `files` Mongo collection (`null` until extraction has run).
 - **Server-owned.** Written only by `POST /files/{id}/extractExpenseInfo`; `PUT /files/{id}` never reads it from the request body.
 - **Not** stored in `File.Metadata` — that dictionary belongs to the client and is replaced on every PUT.
 
@@ -12,7 +12,7 @@ What the server stores on a **File** after running expense extraction (AWS Textr
 
 ```
 File
-└── ExtractedExpenseInfo?
+└── ExtractionInfo?
     ├── ExtractedAtUtc      DateTimeOffset
     ├── Source              string            "AwsTextract.AnalyzeExpense"
     ├── RawText             string            all LINE text, reading order, "\n"-joined (for RAG later)
@@ -84,7 +84,7 @@ Source: `.context/mcdonalds_receipt_output_json.json` (raw Textract output, ~227
 
 ```json
 {
-  "ExtractedExpenseInfo": {
+  "ExtractionInfo": {
     "ExtractedAtUtc": "2026-09-23T17:04:11Z",
     "Source": "AwsTextract.AnalyzeExpense",
     "RawText": "McDonald's Corporation\nThank you for eating at McDonald's\n1027 NORTH HIGH STREET\nMILLVILLE, NJ 08332-2526\n…\nTEL# (856)327-0606\n…\nJun.22'08(Sun)08:56\nSTORE# 6038\nMER# KB34463365001\n…",
@@ -159,18 +159,18 @@ Source: `.context/mcdonalds_receipt_output_json.json` (raw Textract output, ~227
 
 | Situation | Result |
 |-----------|--------|
-| First `POST /files/{id}/extractExpenseInfo` | Calls Textract, stores `ExtractedExpenseInfo`, returns it (200). |
+| First `POST /files/{id}/extractExpenseInfo` | Calls Textract, stores `ExtractionInfo`, returns it (200). |
 | Called again | Returns the stored value without calling Textract. |
 | Called with `?force=true` | Calls Textract again and overwrites the stored value. |
 | Textract finds nothing (e.g. not a receipt) | Stored with `Expenses: []`; cached like any other result. |
 | Textract throws | Nothing is stored; error propagates to the client. |
 | File not found / not owned / no StorageKey | 404. |
-| `PUT /files/{id}` | Does not touch `ExtractedExpenseInfo` (see known limitations). |
+| `PUT /files/{id}` | Does not touch `ExtractionInfo` (see known limitations). |
 | `DELETE /files/{id}` | Removed with the File. |
 
 ## Known limitations (deferred)
 
-- **Lost-update race.** `IFileRepository.UpdateAsync` replaces the whole document. A PUT that loaded the File before an extraction finished will overwrite (erase) the new `ExtractedExpenseInfo`, and vice versa. Fix later with field-level `$set` updates.
+- **Lost-update race.** `IFileRepository.UpdateAsync` replaces the whole document. A PUT that loaded the File before an extraction finished will overwrite (erase) the new `ExtractionInfo`, and vice versa. Fix later with field-level `$set` updates.
 - **Cache assumes immutable file bytes.** The presigned upload URL can be reused until it expires; re-uploading different bytes to the same StorageKey leaves a stale extraction. Use `?force=true`.
-- **List payload size.** `GET /files` returns full `ExtractedExpenseInfo` including Geometry (~10–30 KB per receipt). A reduced list model (vendor, total, date) is planned.
+- **List payload size.** `GET /files` returns full `ExtractionInfo` including Geometry (~10–30 KB per receipt). A reduced list model (vendor, total, date) is planned.
 - **No embeddings yet.** `RawText` is stored ready for Atlas Vector Search / RAG; generating embeddings and the vector index are a later phase.

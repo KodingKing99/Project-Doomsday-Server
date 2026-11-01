@@ -66,11 +66,8 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
         var fetched = await client.GetFromJsonAsync<File>($"/files/{fileId}");
 
         extract.StatusCode.Should().Be(HttpStatusCode.OK);
-        fetched!.ExtractedExpenseInfo.Should().BeEquivalentTo(extracted);
-        fetched
-            .ExtractedExpenseInfo!.Expenses.Single()
-            .Total!.Geometry!.Polygon.Should()
-            .HaveCount(4);
+        fetched!.ExtractionInfo.Should().BeEquivalentTo(extracted);
+        fetched.ExtractionInfo!.Expenses.Single().Total!.Geometry!.Polygon.Should().HaveCount(4);
     }
 
     [Fact]
@@ -82,7 +79,7 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
         await client.PostAsync($"/files/{fileId}/extractExpenseInfo", null);
 
         var document = await RawCollection().Find(new BsonDocument("_id", fileId)).SingleAsync();
-        var amount = document["ExtractedExpenseInfo"]["Expenses"][0]["Total"]["Amount"];
+        var amount = document["ExtractionInfo"]["Expenses"][0]["Total"]["Amount"];
         amount.BsonType.Should().Be(BsonType.Decimal128);
         amount.AsDecimal.Should().Be(11.52m);
     }
@@ -124,6 +121,6 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
 
         put.StatusCode.Should().Be(HttpStatusCode.OK);
         var document = await RawCollection().Find(new BsonDocument("_id", fileId)).SingleAsync();
-        document["ExtractedExpenseInfo"]["Expenses"].AsBsonArray.Should().HaveCount(1);
+        document["ExtractionInfo"]["Expenses"].AsBsonArray.Should().HaveCount(1);
     }
 }
