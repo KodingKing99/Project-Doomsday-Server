@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProjectDoomsdayServer.Application.Files.Requests;
@@ -16,7 +17,13 @@ public sealed class FilesController : ControllerBase
 {
     private readonly IFilesService _filesService;
 
-    public FilesController(IFilesService filesService) => _filesService = filesService;
+    private readonly ICsvExportService _csvExportService;
+
+    public FilesController(IFilesService filesService, ICsvExportService csvExportService)
+    {
+        _filesService = filesService;
+        _csvExportService = csvExportService;
+    }
 
     [HttpPost]
     [Authorize]
@@ -193,5 +200,26 @@ public sealed class FilesController : ControllerBase
             cancellationToken
         );
         return Ok(result);
+    }
+
+    [HttpGet("{id}/export/csv")]
+    [Authorize]
+    [ProducesResponseType<FileContentResult>(StatusCodes.Status200OK, "text/csv")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExportToCsv(
+        string id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var userId = User.FindFirstValue("sub");
+        if (userId is null)
+            return BadRequest("User must be authenticated");
+        var csv = await _csvExportService.ToCsv(
+            new ExportFileToCsvRequest { AuthenticatedUserId = userId, FileId = id },
+            cancellationToken
+        );
+        return File(Encoding.UTF8.GetBytes(csv), "text/csv", $"{id}.csv");
     }
 }

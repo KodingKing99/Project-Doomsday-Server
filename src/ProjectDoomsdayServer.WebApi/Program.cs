@@ -23,6 +23,7 @@ builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileTextExtractionService, FileExtractionService>();
 builder.Services.AddScoped<IFilesService, FilesService>();
+builder.Services.AddScoped<ICsvExportService, CsvExportService>();
 
 #region AWS
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
