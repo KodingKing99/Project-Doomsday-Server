@@ -9,9 +9,9 @@ using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
-using ProjectDoomsdayServer.Domain.DB_Models;
+using ProjectDoomsdayServer.Domain.DbModels;
 using ProjectDoomsdayServer.TestSupport;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.TestSupport;
 
@@ -23,9 +23,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         Substitute.For<IFileTextExtractionService>();
 
     // Track operations for assertions
-    public ConcurrentDictionary<string, byte[]> SavedFiles { get; } = new();
+    public ConcurrentDictionary<string, byte[]> SavedFiles { get; } = new(StringComparer.Ordinal);
     public ConcurrentBag<string> DeletedFileIds { get; } = new();
-    public ConcurrentDictionary<string, File> FileRecords { get; } = new();
+    public ConcurrentDictionary<string, File> FileRecords { get; } = new(StringComparer.Ordinal);
 
     private static void RemoveService<T>(IServiceCollection services)
     {
@@ -118,7 +118,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 {
                     var request = callInfo.ArgAt<ListFileRequest>(0);
                     var list = FileRecords
-                        .Values.Where(f => f.UserId == request.AuthenticatedUserId)
+                        .Values.Where(f =>
+                            string.Equals(
+                                f.UserId,
+                                request.AuthenticatedUserId,
+                                StringComparison.Ordinal
+                            )
+                        )
                         .OrderByDescending(f => f.UpdatedAtUtc)
                         .Skip(request.Skip)
                         .Take(request.Take)

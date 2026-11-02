@@ -6,11 +6,11 @@ using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.E2ETests.Infrastructure;
 using ProjectDoomsdayServer.TestSupport;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.E2ETests.Files;
 
-[Collection(E2ETestCollection.CollectionName)]
+[Collection(E2ETestCollectionDefinition.CollectionName)]
 public sealed class FileOwnershipE2ETests : IAsyncLifetime
 {
     private readonly E2EInfrastructureFixture _infra;
@@ -26,7 +26,7 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _factory.DisposeAsync();
 
-    private async Task<CreateFileResult> CreateFileAsUser(HttpClient client)
+    private static async Task<CreateFileResult> CreateFileAsUser(HttpClient client)
     {
         var input = new CreateFileInput
         {

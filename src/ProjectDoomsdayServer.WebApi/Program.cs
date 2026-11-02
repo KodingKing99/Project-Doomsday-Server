@@ -105,14 +105,14 @@ if (authEnabled)
                 OnTokenValidated = context =>
                 {
                     var tokenUse = context.Principal?.FindFirstValue("token_use");
-                    if (tokenUse != "access")
+                    if (!string.Equals(tokenUse, "access", StringComparison.Ordinal))
                     {
                         context.Fail("Only access tokens are accepted.");
                         return Task.CompletedTask;
                     }
 
                     var clientId = context.Principal?.FindFirstValue("client_id");
-                    if (clientId != expectedClientId)
+                    if (!string.Equals(clientId, expectedClientId, StringComparison.Ordinal))
                     {
                         context.Fail("Token was not issued for this app client.");
                         return Task.CompletedTask;

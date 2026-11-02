@@ -5,8 +5,8 @@ using NSubstitute;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
-using ProjectDoomsdayServer.Domain.DB_Models;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using ProjectDoomsdayServer.Domain.DbModels;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 

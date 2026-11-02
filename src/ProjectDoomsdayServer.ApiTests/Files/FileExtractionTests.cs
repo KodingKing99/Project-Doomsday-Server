@@ -8,7 +8,7 @@ using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 using ProjectDoomsdayServer.TestSupport;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -73,7 +73,13 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
         Task.FromResult(
             _factory
                 .FileExtractionServiceSubstitute.ReceivedCalls()
-                .Count(call => call.GetMethodInfo().Name == "ExtractExpenseInformationAsync")
+                .Count(call =>
+                    string.Equals(
+                        call.GetMethodInfo().Name,
+                        "ExtractExpenseInformationAsync",
+                        StringComparison.Ordinal
+                    )
+                )
         );
 
     [Fact]

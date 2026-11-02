@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference
+      Include="Meziantou.Analyzer"
+      Version="3.0.320"
+      PrivateAssets="all"
+      IncludeAssets="runtime; build; native; contentfiles; analyzers"
+    />
+  </ItemGroup>
+</Project>

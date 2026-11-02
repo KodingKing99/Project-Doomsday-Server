@@ -8,7 +8,7 @@ using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Domain.Configuration;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.Infrastructure.Files;
 

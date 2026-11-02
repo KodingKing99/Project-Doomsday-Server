@@ -129,7 +129,7 @@ public static class TextractExpenseMapper
             ProductCode = BestOfType(fields, "PRODUCT_CODE", MapField),
             ExpenseRow = BestOfType(fields, "EXPENSE_ROW", MapField),
             OtherFields = fields
-                .Where(field => !mappedTypes.Contains(field.Type?.Text))
+                .Where(field => !mappedTypes.Contains(field.Type?.Text, StringComparer.Ordinal))
                 .Select(MapField)
                 .ToList(),
         };
@@ -143,7 +143,7 @@ public static class TextractExpenseMapper
         where T : class
     {
         var best = fields
-            .Where(field => field.Type?.Text == type)
+            .Where(field => string.Equals(field.Type?.Text, type, StringComparison.Ordinal))
             .OrderByDescending(field => field.ValueDetection?.Confidence ?? 0)
             .FirstOrDefault();
         return best is null ? null : map(best);

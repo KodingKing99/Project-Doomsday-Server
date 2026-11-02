@@ -1,4 +1,4 @@
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.Application.Files.Results;
 

@@ -38,7 +38,12 @@ public class TextractExpenseMapperTests
         var expense = MapSingleExpense();
 
         expense.VendorName!.Text.Should().Be("McDonald's");
-        expense.SummaryFields.Count(field => field.Type == "VENDOR_NAME").Should().Be(2);
+        expense
+            .SummaryFields.Count(field =>
+                string.Equals(field.Type, "VENDOR_NAME", StringComparison.Ordinal)
+            )
+            .Should()
+            .Be(2);
         expense.SummaryFields.Should().HaveCount(10);
     }
 

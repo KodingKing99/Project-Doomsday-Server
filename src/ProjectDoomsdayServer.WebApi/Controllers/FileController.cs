@@ -7,7 +7,7 @@ using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.WebApi.Controllers;
 
@@ -75,7 +75,7 @@ public sealed class FileController : ControllerBase
                 ContentType = record.ContentType,
                 SizeBytes = record.SizeBytes,
                 HashSha256 = record.HashSha256,
-                Metadata = record.Metadata ?? new(),
+                Metadata = record.Metadata ?? new(StringComparer.Ordinal),
             },
             cancellationToken
         );

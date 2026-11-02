@@ -2,7 +2,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using MongoDB.Driver;
 using Testcontainers.Minio;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.E2ETests.Infrastructure;
 

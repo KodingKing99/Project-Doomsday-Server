@@ -5,7 +5,7 @@ using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
 using ProjectDoomsdayServer.Application.Ports.Services.TextExtraction;
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.Application.Files.Services;
 
@@ -32,7 +32,7 @@ public sealed class FileService : IFileService
     )
     {
         var input = request.Input;
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         var record = new File
         {
             CreatedAtUtc = now,
@@ -60,7 +60,10 @@ public sealed class FileService : IFileService
     public async Task<File> GetAsync(GetFileRequest request, CancellationToken cancellationToken)
     {
         var record = await _repo.GetAsync(request.Id, cancellationToken);
-        if (record is null || record.UserId != request.AuthenticatedUserId)
+        if (
+            record is null
+            || !string.Equals(record.UserId, request.AuthenticatedUserId, StringComparison.Ordinal)
+        )
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
         return record;
     }
@@ -76,7 +79,14 @@ public sealed class FileService : IFileService
     )
     {
         var existing = await _repo.GetAsync(request.Id, cancellationToken);
-        if (existing is null || existing.UserId != request.AuthenticatedUserId)
+        if (
+            existing is null
+            || !string.Equals(
+                existing.UserId,
+                request.AuthenticatedUserId,
+                StringComparison.Ordinal
+            )
+        )
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
 
         existing.FileName = request.FileName;
@@ -98,7 +108,10 @@ public sealed class FileService : IFileService
     public async Task DeleteAsync(DeleteFileRequest request, CancellationToken cancellationToken)
     {
         var file = await _repo.GetAsync(request.Id, cancellationToken);
-        if (file is null || file.UserId != request.AuthenticatedUserId)
+        if (
+            file is null
+            || !string.Equals(file.UserId, request.AuthenticatedUserId, StringComparison.Ordinal)
+        )
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
 
         if (file.StorageKey is not null)
@@ -112,7 +125,10 @@ public sealed class FileService : IFileService
     )
     {
         var file = await _repo.GetAsync(request.Id, cancellationToken);
-        if (file is null || file.UserId != request.AuthenticatedUserId)
+        if (
+            file is null
+            || !string.Equals(file.UserId, request.AuthenticatedUserId, StringComparison.Ordinal)
+        )
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
         if (file.StorageKey is null)
             throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");
@@ -125,7 +141,10 @@ public sealed class FileService : IFileService
     )
     {
         var file = await _repo.GetAsync(request.Id, cancellationToken);
-        if (file is null || file.UserId != request.AuthenticatedUserId)
+        if (
+            file is null
+            || !string.Equals(file.UserId, request.AuthenticatedUserId, StringComparison.Ordinal)
+        )
             throw new FileRecordNotFoundException($"File {request.Id} not found.");
         if (file.StorageKey is null)
             throw new FileRecordNotFoundException($"File {request.Id} has no storage key.");

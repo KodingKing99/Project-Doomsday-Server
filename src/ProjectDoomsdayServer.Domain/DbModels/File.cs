@@ -1,6 +1,6 @@
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
-namespace ProjectDoomsdayServer.Domain.DB_Models;
+namespace ProjectDoomsdayServer.Domain.DbModels;
 
 public sealed class File
 {
@@ -14,6 +14,6 @@ public sealed class File
     public string? HashSha256 { get; set; }
     public DateTimeOffset CreatedAtUtc { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
-    public Dictionary<string, string> Metadata { get; init; } = new();
+    public Dictionary<string, string> Metadata { get; init; } = new(StringComparer.Ordinal);
     public ExtractionInfo? ExtractionInfo { get; set; }
 }

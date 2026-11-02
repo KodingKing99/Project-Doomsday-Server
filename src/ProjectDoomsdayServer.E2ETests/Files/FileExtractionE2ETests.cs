@@ -8,11 +8,11 @@ using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 using ProjectDoomsdayServer.E2ETests.Infrastructure;
 using ProjectDoomsdayServer.TestSupport;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.E2ETests.Files;
 
-[Collection(E2ETestCollection.CollectionName)]
+[Collection(E2ETestCollectionDefinition.CollectionName)]
 public sealed class FileExtractionE2ETests : IAsyncLifetime
 {
     private readonly E2EInfrastructureFixture _infra;
@@ -28,7 +28,7 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _factory.DisposeAsync();
 
-    private async Task<string> CreateUploadedFileAsync(HttpClient client)
+    private static async Task<string> CreateUploadedFileAsync(HttpClient client)
     {
         var response = await client.PostAsJsonAsync(
             "/file",

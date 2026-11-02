@@ -4,9 +4,9 @@ using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
-using ProjectDoomsdayServer.Domain.DB_Models;
+using ProjectDoomsdayServer.Domain.DbModels;
 using ProjectDoomsdayServer.Domain.Models.Input;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 

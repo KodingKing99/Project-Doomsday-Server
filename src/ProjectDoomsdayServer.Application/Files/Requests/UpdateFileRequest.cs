@@ -9,6 +9,6 @@ public class UpdateFileRequest : IAuthenticatedRequest
     public string ContentType { get; set; } = "application/octet-stream";
     public long SizeBytes { get; set; }
     public string? HashSha256 { get; set; }
-    public Dictionary<string, string> Metadata { get; init; } = new();
+    public Dictionary<string, string> Metadata { get; init; } = new(StringComparer.Ordinal);
     public required string AuthenticatedUserId { get; set; }
 }

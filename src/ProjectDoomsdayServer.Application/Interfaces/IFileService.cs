@@ -2,7 +2,7 @@ using ProjectDoomsdayServer.Application.Exceptions;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.Application.Interfaces;
 
@@ -57,7 +57,7 @@ public interface IFileService
     /// Throws <see cref="FileRecordNotFoundException"/> if missing, not owned, or has no storage key.
     /// </summary>
     Task<ExtractionInfo> ExtractExpenseInformationAsync(
-        ExtractExpenseImageInfoRequest extractExpenseImageInfoRequest,
+        ExtractExpenseImageInfoRequest request,
         CancellationToken cancellationToken
     );
 }

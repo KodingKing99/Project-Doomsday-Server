@@ -6,11 +6,11 @@ using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.E2ETests.Infrastructure;
 using ProjectDoomsdayServer.TestSupport;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.E2ETests.Files;
 
-[Collection(E2ETestCollection.CollectionName)]
+[Collection(E2ETestCollectionDefinition.CollectionName)]
 public sealed class PresignedUploadE2ETests : IAsyncLifetime
 {
     private readonly E2EInfrastructureFixture _infra;

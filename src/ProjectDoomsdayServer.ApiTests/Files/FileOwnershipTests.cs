@@ -6,7 +6,7 @@ using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.TestSupport;
-using File = ProjectDoomsdayServer.Domain.DB_Models.File;
+using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -20,7 +20,10 @@ public class FileOwnershipTests : IClassFixture<CustomWebApplicationFactory>
         _factory.Reset();
     }
 
-    private async Task<File> CreateFileAsUser(HttpClient client, string fileName = "test.txt")
+    private static async Task<File> CreateFileAsUser(
+        HttpClient client,
+        string fileName = "test.txt"
+    )
     {
         var input = new CreateFileInput
         {

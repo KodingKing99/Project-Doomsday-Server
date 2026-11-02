@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
@@ -47,7 +48,7 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
         new()
         {
             Type = "A",
-            Text = amount.ToString(),
+            Text = amount.ToString(CultureInfo.InvariantCulture),
             Amount = amount,
         };
 
