@@ -11,6 +11,9 @@ namespace ProjectDoomsdayServer.E2ETests.Files;
 [Collection(E2ETestCollectionDefinition.CollectionName)]
 public sealed class FileSeededDataE2ETests : IAsyncLifetime
 {
+    private const string SeededFileName = "seeded.txt";
+    private const int SeededSizeBytes = 42;
+
     private readonly E2EInfrastructureFixture _infra;
     private E2EWebApplicationFactory _factory = default!;
 
@@ -27,33 +30,36 @@ public sealed class FileSeededDataE2ETests : IAsyncLifetime
     [Fact]
     public async Task SeededFile_IsReturnedByGetById()
     {
+        // Arrange
         var userId = E2ETestHelpers.UniqueUserId();
         var seededFile = new File
         {
             Id = ObjectId.GenerateNewId().ToString(),
             UserId = userId,
-            FileName = "seeded.txt",
-            ContentType = "text/plain",
-            SizeBytes = 42,
+            FileName = SeededFileName,
+            ContentType = TestConstants.PlainTextContentType,
+            SizeBytes = SeededSizeBytes,
             StorageKey = $"{userId}/seeded-object",
         };
-
         await _infra.SeedFilesAsync([seededFile]);
-
         var client = _factory.CreateClientAs(userId);
 
-        var getResponse = await client.GetAsync($"/file/{seededFile.Id}");
+        // Act
+        var getResponse = await client.GetAsync(FileRoutes.ById(seededFile.Id!));
+
+        // Assert
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResponse.Content.ReadFromJsonAsync<File>();
         fetched.Should().NotBeNull();
-        fetched!.FileName.Should().Be("seeded.txt");
+        fetched!.FileName.Should().Be(SeededFileName);
         fetched.UserId.Should().Be(userId);
-        fetched.SizeBytes.Should().Be(42);
+        fetched.SizeBytes.Should().Be(SeededSizeBytes);
     }
 
     [Fact]
     public async Task SeededFiles_AreReturnedByList()
     {
+        // Arrange
         var userId = E2ETestHelpers.UniqueUserId();
         var seededFiles = Enumerable
             .Range(1, 3)
@@ -62,17 +68,18 @@ public sealed class FileSeededDataE2ETests : IAsyncLifetime
                 Id = ObjectId.GenerateNewId().ToString(),
                 UserId = userId,
                 FileName = $"seeded-{i}.txt",
-                ContentType = "text/plain",
+                ContentType = TestConstants.PlainTextContentType,
                 SizeBytes = i * 10,
                 StorageKey = $"{userId}/seeded-object-{i}",
             })
             .ToList();
-
         await _infra.SeedFilesAsync(seededFiles);
-
         var client = _factory.CreateClientAs(userId);
 
-        var listResponse = await client.GetAsync("/file?skip=0&take=50");
+        // Act
+        var listResponse = await client.GetAsync(FileRoutes.List(skip: 0, take: 50));
+
+        // Assert
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
         files.Should().NotBeNull();

@@ -54,7 +54,9 @@ public sealed class E2EInfrastructureFixture : IAsyncLifetime
     /// </summary>
     public async Task SeedFilesAsync(IEnumerable<File> files)
     {
-        var collection = _mongoClient.GetDatabase(DatabaseName).GetCollection<File>("files");
+        var collection = _mongoClient
+            .GetDatabase(DatabaseName)
+            .GetCollection<File>(TestConstants.FilesCollectionName);
         await collection.InsertManyAsync(files);
     }
 
@@ -66,7 +68,7 @@ public sealed class E2EInfrastructureFixture : IAsyncLifetime
             {
                 ServiceURL = MinioEndpoint,
                 ForcePathStyle = true,
-                AuthenticationRegion = "us-east-1",
+                AuthenticationRegion = TestConstants.MinioAuthenticationRegion,
             }
         );
 }

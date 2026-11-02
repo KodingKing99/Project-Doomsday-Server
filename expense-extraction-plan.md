@@ -45,7 +45,7 @@ New folder `Models/TextExtraction/` (POCOs, no Bson attributes):
 - `AmountField : ExtractedField { decimal? Amount }`, `DateField : ExtractedField { DateOnly? Date }`
 - `Geometry { PageNumber, BoundingBox, List<Point> Polygon }`, `BoundingBox { Left, Top, Width, Height }`, `Point { X, Y }`
 
-Add `public ExtractionInfo? ExtractionInfo { get; set; }` to `Domain/DB_Models/File.cs`.
+Add `public ExtractionInfo? ExtractionInfo { get; set; }` to `Domain/DbModels/File.cs`.
 
 ### 2. Mapper — `ProjectDoomsdayServer.Infrastructure`
 - `Files/TextractExpenseMapper.cs`: pure static `ExtractionInfo Map(AnalyzeExpenseResponse response, DateTimeOffset extractedAtUtc)`.

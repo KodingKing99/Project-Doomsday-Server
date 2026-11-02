@@ -14,6 +14,10 @@ namespace ProjectDoomsdayServer.ApiTests.Files;
 
 public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private const string ExtractionSource = "test";
+    private const string FirstVendorName = "first";
+    private const string SecondVendorName = "second";
+
     private readonly CustomWebApplicationFactory _factory;
 
     public FileExtractionTests(CustomWebApplicationFactory factory)
@@ -26,14 +30,14 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
                 Arg.Any<MemoryStream>(),
                 Arg.Any<CancellationToken>()
             )
-            .Returns(_ => Task.FromResult(CreateExtraction("first")));
+            .Returns(_ => Task.FromResult(CreateExtraction(FirstVendorName)));
     }
 
     private static ExtractionInfo CreateExtraction(string vendorName) =>
         new()
         {
             ExtractedAtUtc = DateTimeOffset.UtcNow,
-            Source = "test",
+            Source = ExtractionSource,
             RawText = "raw",
             Expenses =
             [
@@ -54,11 +58,11 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<File> CreateFileAsync(HttpClient client, bool withStorageKey = true)
     {
         var response = await client.PostAsJsonAsync(
-            "/file",
+            FileRoutes.Base,
             new CreateFileInput
             {
-                FileName = "receipt.jpg",
-                ContentType = "image/jpeg",
+                FileName = TestConstants.ReceiptFileName,
+                ContentType = TestConstants.ImageJpegContentType,
                 SizeBytes = 10,
             }
         );
@@ -85,11 +89,14 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Extract_Returns200WithTypedBody_AndStoresOnRecord()
     {
-        var client = _factory.CreateClientAs("user-a");
+        // Arrange
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
 
-        var response = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        // Act
+        var response = await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ExtractionInfo>();
         body!.Expenses.Single().Total!.Amount.Should().Be(11.52m);
@@ -99,12 +106,15 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Extract_SecondCall_ReturnsCachedWithoutCallingService()
     {
-        var client = _factory.CreateClientAs("user-a");
+        // Arrange
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
 
-        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
-        var second = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        // Act
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
+        var second = await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Assert
         second.StatusCode.Should().Be(HttpStatusCode.OK);
         (await ExtractionCallCount()).Should().Be(1);
     }
@@ -112,68 +122,80 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Extract_ForceTrue_CallsServiceAgainAndOverwrites()
     {
-        var client = _factory.CreateClientAs("user-a");
+        // Arrange
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
-        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
         _factory
             .FileExtractionServiceSubstitute.ExtractExpenseInformationAsync(
                 Arg.Any<MemoryStream>(),
                 Arg.Any<CancellationToken>()
             )
-            .Returns(_ => Task.FromResult(CreateExtraction("second")));
+            .Returns(_ => Task.FromResult(CreateExtraction(SecondVendorName)));
 
+        // Act
         var response = await client.PostAsync(
-            $"/file/{file.Id}/extractExpenseInfo?force=true",
+            FileRoutes.ExtractExpenseInfo(file.Id!, force: true),
             null
         );
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await ExtractionCallCount()).Should().Be(2);
         _factory
             .FileRecords[file.Id!]
             .ExtractionInfo!.Expenses.Single()
             .VendorName!.Text.Should()
-            .Be("second");
+            .Be(SecondVendorName);
     }
 
     [Fact]
     public async Task Extract_FileOwnedByOtherUser_Returns404()
     {
-        var file = await CreateFileAsync(_factory.CreateClientAs("user-a"));
+        // Arrange
+        var file = await CreateFileAsync(_factory.CreateClientAs(TestConstants.UserA));
 
+        // Act
         var response = await _factory
-            .CreateClientAs("user-b")
-            .PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+            .CreateClientAs(TestConstants.UserB)
+            .PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Extract_FileWithoutStorageKey_Returns404()
     {
-        var client = _factory.CreateClientAs("user-a");
+        // Arrange
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client, withStorageKey: false);
 
-        var response = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        // Act
+        var response = await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Extract_ZeroExpenses_StoresEmptyListAndCaches()
     {
+        // Arrange
         _factory
             .FileExtractionServiceSubstitute.ExtractExpenseInformationAsync(
                 Arg.Any<MemoryStream>(),
                 Arg.Any<CancellationToken>()
             )
-            .Returns(_ => Task.FromResult(new ExtractionInfo { Source = "test" }));
-        var client = _factory.CreateClientAs("user-a");
+            .Returns(_ => Task.FromResult(new ExtractionInfo { Source = ExtractionSource }));
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
 
-        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
-        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        // Act
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Assert
         _factory.FileRecords[file.Id!].ExtractionInfo!.Expenses.Should().BeEmpty();
         (await ExtractionCallCount()).Should().Be(1);
     }
@@ -181,17 +203,20 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Extract_ServiceThrows_LeavesRecordUnchanged()
     {
+        // Arrange
         _factory
             .FileExtractionServiceSubstitute.ExtractExpenseInformationAsync(
                 Arg.Any<MemoryStream>(),
                 Arg.Any<CancellationToken>()
             )
             .ThrowsAsync(new InvalidOperationException("textract down"));
-        var client = _factory.CreateClientAs("user-a");
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
 
-        var response = await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        // Act
+        var response = await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         _factory.FileRecords[file.Id!].ExtractionInfo.Should().BeNull();
     }
@@ -199,20 +224,23 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Put_AfterExtraction_KeepsExtractionInfo()
     {
-        var client = _factory.CreateClientAs("user-a");
+        // Arrange
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
-        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
+        // Act
         var put = await client.PutAsJsonAsync(
-            $"/file/{file.Id}",
+            FileRoutes.ById(file.Id!),
             new
             {
                 FileName = "renamed.jpg",
-                ContentType = "image/jpeg",
+                ContentType = TestConstants.ImageJpegContentType,
                 SizeBytes = 10,
             }
         );
 
+        // Assert
         put.StatusCode.Should().Be(HttpStatusCode.OK);
         _factory.FileRecords[file.Id!].ExtractionInfo.Should().NotBeNull();
     }
@@ -220,13 +248,16 @@ public class FileExtractionTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetAndList_IncludeExtractionInfo()
     {
-        var client = _factory.CreateClientAs("user-a");
+        // Arrange
+        var client = _factory.CreateClientAs(TestConstants.UserA);
         var file = await CreateFileAsync(client);
-        await client.PostAsync($"/file/{file.Id}/extractExpenseInfo", null);
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(file.Id!), null);
 
-        var single = await client.GetFromJsonAsync<File>($"/file/{file.Id}");
-        var list = await client.GetFromJsonAsync<List<File>>("/file");
+        // Act
+        var single = await client.GetFromJsonAsync<File>(FileRoutes.ById(file.Id!));
+        var list = await client.GetFromJsonAsync<List<File>>(FileRoutes.List());
 
+        // Assert
         single!.ExtractionInfo.Should().NotBeNull();
         list!.Single().ExtractionInfo.Should().NotBeNull();
     }

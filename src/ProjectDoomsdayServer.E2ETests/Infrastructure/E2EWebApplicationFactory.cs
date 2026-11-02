@@ -34,7 +34,7 @@ public sealed class E2EWebApplicationFactory : WebApplicationFactory<Program>
                 {
                     ServiceURL = _infra.MinioEndpoint,
                     ForcePathStyle = true,
-                    AuthenticationRegion = "us-east-1",
+                    AuthenticationRegion = TestConstants.MinioAuthenticationRegion,
                 }
             ));
 

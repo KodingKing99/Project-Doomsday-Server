@@ -13,6 +13,8 @@ namespace ProjectDoomsdayServer.E2ETests.Files;
 [Collection(E2ETestCollectionDefinition.CollectionName)]
 public sealed class FileOwnershipE2ETests : IAsyncLifetime
 {
+    private const int DefaultSizeBytes = 100;
+
     private readonly E2EInfrastructureFixture _infra;
     private E2EWebApplicationFactory _factory = default!;
 
@@ -31,10 +33,10 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
         var input = new CreateFileInput
         {
             FileName = "ownership-test.txt",
-            ContentType = "text/plain",
-            SizeBytes = 100,
+            ContentType = TestConstants.PlainTextContentType,
+            SizeBytes = DefaultSizeBytes,
         };
-        var response = await client.PostAsJsonAsync("/file", input);
+        var response = await client.PostAsJsonAsync(FileRoutes.Base, input);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CreateFileResult>())!;
     }
@@ -42,69 +44,83 @@ public sealed class FileOwnershipE2ETests : IAsyncLifetime
     [Fact]
     public async Task CrossUser_Get_Returns404ForNonOwner_And200ForOwner()
     {
+        // Arrange
         var userAId = E2ETestHelpers.UniqueUserId();
         var userBId = E2ETestHelpers.UniqueUserId();
         var userAClient = _factory.CreateClientAs(userAId);
         var userBClient = _factory.CreateClientAs(userBId);
-
         var createResult = await CreateFileAsUser(userAClient);
-        var fileId = createResult.File.Id;
+        var fileId = createResult.File.Id!;
 
-        var nonOwnerResponse = await userBClient.GetAsync($"/file/{fileId}");
+        // Act
+        var nonOwnerResponse = await userBClient.GetAsync(FileRoutes.ById(fileId));
+        var ownerResponse = await userAClient.GetAsync(FileRoutes.ById(fileId));
+
+        // Assert
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
-
-        var ownerResponse = await userAClient.GetAsync($"/file/{fileId}");
         ownerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task CrossUser_Download_Returns404ForNonOwner()
     {
+        // Arrange
         var userAId = E2ETestHelpers.UniqueUserId();
         var userBId = E2ETestHelpers.UniqueUserId();
         var userAClient = _factory.CreateClientAs(userAId);
         var userBClient = _factory.CreateClientAs(userBId);
-
         var createResult = await CreateFileAsUser(userAClient);
-        var fileId = createResult.File.Id;
+        var fileId = createResult.File.Id!;
 
-        var nonOwnerResponse = await userBClient.GetAsync($"/file/{fileId}/content");
+        // Act
+        var nonOwnerResponse = await userBClient.GetAsync(FileRoutes.Content(fileId));
+
+        // Assert
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task CrossUser_Update_Returns404ForNonOwner()
     {
+        // Arrange
         var userAId = E2ETestHelpers.UniqueUserId();
         var userBId = E2ETestHelpers.UniqueUserId();
         var userAClient = _factory.CreateClientAs(userAId);
         var userBClient = _factory.CreateClientAs(userBId);
-
         var createResult = await CreateFileAsUser(userAClient);
-        var fileId = createResult.File.Id;
-
+        var fileId = createResult.File.Id!;
         var updateRecord = new File
         {
             FileName = "hijacked.txt",
-            ContentType = "text/plain",
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 200,
         };
-        var nonOwnerResponse = await userBClient.PutAsJsonAsync($"/file/{fileId}", updateRecord);
+
+        // Act
+        var nonOwnerResponse = await userBClient.PutAsJsonAsync(
+            FileRoutes.ById(fileId),
+            updateRecord
+        );
+
+        // Assert
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task CrossUser_Delete_Returns404ForNonOwner()
     {
+        // Arrange
         var userAId = E2ETestHelpers.UniqueUserId();
         var userBId = E2ETestHelpers.UniqueUserId();
         var userAClient = _factory.CreateClientAs(userAId);
         var userBClient = _factory.CreateClientAs(userBId);
-
         var createResult = await CreateFileAsUser(userAClient);
-        var fileId = createResult.File.Id;
+        var fileId = createResult.File.Id!;
 
-        var nonOwnerResponse = await userBClient.DeleteAsync($"/file/{fileId}");
+        // Act
+        var nonOwnerResponse = await userBClient.DeleteAsync(FileRoutes.ById(fileId));
+
+        // Assert
         nonOwnerResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

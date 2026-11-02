@@ -6,6 +6,7 @@ using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.DbModels;
+using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
@@ -22,15 +23,15 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<File> CreateTestFile(string fileName = "test.txt")
+    private async Task<File> CreateTestFile(string fileName = TestConstants.DefaultTestFileName)
     {
         var record = new File
         {
             FileName = fileName,
-            ContentType = "text/plain",
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 100,
         };
-        var response = await _client.PostAsJsonAsync("/file", record);
+        var response = await _client.PostAsJsonAsync(FileRoutes.Base, record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -43,7 +44,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        var response = await _client.DeleteAsync($"/file/{created.Id}");
+        var response = await _client.DeleteAsync(FileRoutes.ById(created.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -56,7 +57,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        await _client.DeleteAsync($"/file/{created.Id}");
+        await _client.DeleteAsync(FileRoutes.ById(created.Id!));
 
         // Assert - storage is called with the StorageKey, not the Id
         await _factory
@@ -72,8 +73,8 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        await _client.DeleteAsync($"/file/{created.Id}");
-        var response = await _client.GetAsync($"/file/{created.Id}");
+        await _client.DeleteAsync(FileRoutes.ById(created.Id!));
+        var response = await _client.GetAsync(FileRoutes.ById(created.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -86,7 +87,7 @@ public class FileDeleteTests : IClassFixture<CustomWebApplicationFactory>
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
-        var response = await _client.DeleteAsync($"/file/{randomId}");
+        var response = await _client.DeleteAsync(FileRoutes.ById(randomId));
 
         // Assert — service throws FileNotFoundException for missing files, mapped to 404
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

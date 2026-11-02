@@ -6,6 +6,8 @@ namespace ProjectDoomsdayServer.UnitTests;
 
 public class TextractExpenseMapperTests
 {
+    private const string OtherFieldText = "x";
+
     private static readonly DateTimeOffset ExtractedAt = new(2026, 9, 23, 17, 0, 0, TimeSpan.Zero);
 
     private static Domain.Models.TextExtraction.Expense MapSingleExpense() =>
@@ -14,8 +16,13 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_SetsSourceAndTimestamp()
     {
-        var result = TextractExpenseMapper.Map(McDonaldsReceiptResponse.Create(), ExtractedAt);
+        // Arrange
+        var response = McDonaldsReceiptResponse.Create();
 
+        // Act
+        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+
+        // Assert
         result.Source.Should().Be("AwsTextract.AnalyzeExpense");
         result.ExtractedAtUtc.Should().Be(ExtractedAt);
     }
@@ -23,8 +30,10 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_MapsAmountsWithRawText()
     {
+        // Act
         var expense = MapSingleExpense();
 
+        // Assert
         expense.Total!.Amount.Should().Be(11.52m);
         expense.Total.Text.Should().Be("11.52");
         expense.Subtotal!.Amount.Should().Be(10.77m);
@@ -35,8 +44,10 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_VendorNameTakesHighestConfidence_AndKeepsAllSummaryFields()
     {
+        // Act
         var expense = MapSingleExpense();
 
+        // Assert
         expense.VendorName!.Text.Should().Be("McDonald's");
         expense
             .SummaryFields.Count(field =>
@@ -50,8 +61,10 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_FlattensLineItems()
     {
+        // Act
         var lineItems = MapSingleExpense().LineItems;
 
+        // Assert
         lineItems.Should().HaveCount(4);
         lineItems[0].Item!.Text.Should().Be("BIG BREAKFAST");
         lineItems[0].Price!.Amount.Should().Be(2.99m);
@@ -64,23 +77,30 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_UnmappedLineItemFieldsGoToOtherFields()
     {
+        // Arrange
         var response = McDonaldsReceiptResponse.Create();
         response
             .ExpenseDocuments[0]
             .LineItemGroups[0]
             .LineItems[0]
-            .LineItemExpenseFields.Add(McDonaldsReceiptResponse.Field("OTHER", "x", 90f));
+            .LineItemExpenseFields.Add(
+                McDonaldsReceiptResponse.Field("OTHER", OtherFieldText, 90f)
+            );
 
+        // Act
         var lineItem = TextractExpenseMapper.Map(response, ExtractedAt).Expenses[0].LineItems[0];
 
-        lineItem.OtherFields.Should().ContainSingle().Which.Text.Should().Be("x");
+        // Assert
+        lineItem.OtherFields.Should().ContainSingle().Which.Text.Should().Be(OtherFieldText);
     }
 
     [Fact]
     public void Map_GeometryIsNormalizedWithFourPointPolygon()
     {
+        // Act
         var geometry = MapSingleExpense().Total!.Geometry!;
 
+        // Assert
         geometry.PageNumber.Should().Be(1);
         geometry.BoundingBox.Left.Should().BeInRange(0, 1);
         geometry.BoundingBox.Width.Should().BeApproximately(0.125, 1e-6);
@@ -90,8 +110,10 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_LabelsHaveNoGeometry()
     {
+        // Act
         var total = MapSingleExpense().Subtotal!;
 
+        // Assert
         total.Label.Should().Be("SUB TOTAL");
         total.LabelConfidence.Should().NotBeNull();
     }
@@ -99,8 +121,10 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_UnparseableReceiptDate_KeepsTextWithNullDate()
     {
+        // Act
         var receiptDate = MapSingleExpense().ReceiptDate!;
 
+        // Assert
         receiptDate.Date.Should().BeNull();
         receiptDate.Text.Should().Be("Jun.22'08(Sun)08:");
     }
@@ -108,16 +132,26 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_RawTextContainsOnlyLineBlocks()
     {
-        var result = TextractExpenseMapper.Map(McDonaldsReceiptResponse.Create(), ExtractedAt);
+        // Arrange
+        var response = McDonaldsReceiptResponse.Create();
 
+        // Act
+        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+
+        // Assert
         result.RawText.Should().Be("McDonald's Corporation\nThank you for eating at McDonald's");
     }
 
     [Fact]
     public void Map_EmptyResponse_HasNoExpenses()
     {
-        var result = TextractExpenseMapper.Map(new AnalyzeExpenseResponse(), ExtractedAt);
+        // Arrange
+        var response = new AnalyzeExpenseResponse();
 
+        // Act
+        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+
+        // Assert
         result.Expenses.Should().BeEmpty();
         result.RawText.Should().BeEmpty();
     }
@@ -125,6 +159,7 @@ public class TextractExpenseMapperTests
     [Fact]
     public void Map_TwoDocuments_ProducesTwoExpenses()
     {
+        // Arrange
         var response = new AnalyzeExpenseResponse
         {
             ExpenseDocuments =
@@ -134,8 +169,10 @@ public class TextractExpenseMapperTests
             ],
         };
 
+        // Act
         var result = TextractExpenseMapper.Map(response, ExtractedAt);
 
+        // Assert
         result.Expenses.Select(expense => expense.ExpenseIndex).Should().Equal(1, 2);
     }
 
@@ -145,15 +182,24 @@ public class TextractExpenseMapperTests
     [InlineData("abc", null)]
     [InlineData("", null)]
     [InlineData(null, null)]
-    public void ParseAmount_HandlesEdgeCases(string? text, double? expected) =>
-        TextractExpenseMapper
-            .ParseAmount(text)
-            .Should()
-            .Be(expected is null ? null : (decimal)expected);
+    public void ParseAmount_HandlesEdgeCases(string? text, double? expected)
+    {
+        // Act
+        var result = TextractExpenseMapper.ParseAmount(text);
+
+        // Assert
+        result.Should().Be(expected is null ? null : (decimal)expected);
+    }
 
     [Theory]
     [InlineData("2008-06-22", 2008, 6, 22)]
     [InlineData("6/22/2008", 2008, 6, 22)]
-    public void ParseDate_ParsesCommonFormats(string text, int year, int month, int day) =>
-        TextractExpenseMapper.ParseDate(text).Should().Be(new DateOnly(year, month, day));
+    public void ParseDate_ParsesCommonFormats(string text, int year, int month, int day)
+    {
+        // Act
+        var result = TextractExpenseMapper.ParseDate(text);
+
+        // Assert
+        result.Should().Be(new DateOnly(year, month, day));
+    }
 }

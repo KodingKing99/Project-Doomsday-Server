@@ -4,12 +4,16 @@ using FluentAssertions;
 using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Domain.DbModels;
 using ProjectDoomsdayServer.Domain.Models.Input;
+using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
 public class FileListTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private const string FirstFileName = "first.txt";
+    private const string SecondFileName = "second.txt";
+
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
@@ -20,7 +24,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task CreateTestFile(string fileName, string contentType = "text/plain")
+    private async Task CreateTestFile(
+        string fileName,
+        string contentType = TestConstants.PlainTextContentType
+    )
     {
         var record = new CreateFileInput
         {
@@ -28,8 +35,10 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = contentType,
             SizeBytes = 100,
         };
-        await _client.PostAsJsonAsync("/file", record);
+        await _client.PostAsJsonAsync(FileRoutes.Base, record);
     }
+
+    private static string FileNameFor(int index) => $"file{index}.txt";
 
     [Fact]
     public async Task List_NoFiles_ReturnsEmptyList()
@@ -37,7 +46,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange - factory is reset, no files
 
         // Act
-        var response = await _client.GetAsync("/file");
+        var response = await _client.GetAsync(FileRoutes.List());
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -52,11 +61,11 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange - Create 3 files
         for (var i = 1; i <= 3; i++)
         {
-            await CreateTestFile($"file{i}.txt");
+            await CreateTestFile(FileNameFor(i));
         }
 
         // Act
-        var response = await _client.GetAsync("/file");
+        var response = await _client.GetAsync(FileRoutes.List());
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -71,11 +80,11 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange - Create 5 files
         for (var i = 1; i <= 5; i++)
         {
-            await CreateTestFile($"file{i}.txt");
+            await CreateTestFile(FileNameFor(i));
         }
 
         // Act
-        var response = await _client.GetAsync("/file?skip=2");
+        var response = await _client.GetAsync(FileRoutes.List(skip: 2));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -90,11 +99,11 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange - Create 5 files
         for (var i = 1; i <= 5; i++)
         {
-            await CreateTestFile($"file{i}.txt");
+            await CreateTestFile(FileNameFor(i));
         }
 
         // Act
-        var response = await _client.GetAsync("/file?take=2");
+        var response = await _client.GetAsync(FileRoutes.List(take: 2));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -109,11 +118,11 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange - Create 10 files (simulating larger set)
         for (var i = 1; i <= 10; i++)
         {
-            await CreateTestFile($"file{i}.txt");
+            await CreateTestFile(FileNameFor(i));
         }
 
         // Act - Request 500 but should be clamped to 200
-        var response = await _client.GetAsync("/file?take=500");
+        var response = await _client.GetAsync(FileRoutes.List(take: 500));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -127,12 +136,12 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
     public async Task List_OrderedByUpdatedAtDescending()
     {
         // Arrange - Create files with delays
-        await CreateTestFile("first.txt");
+        await CreateTestFile(FirstFileName);
         await Task.Delay(50); // Small delay to ensure different timestamps
-        await CreateTestFile("second.txt");
+        await CreateTestFile(SecondFileName);
 
         // Act
-        var response = await _client.GetAsync("/file");
+        var response = await _client.GetAsync(FileRoutes.List());
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -140,7 +149,7 @@ public class FileListTests : IClassFixture<CustomWebApplicationFactory>
         records.Should().NotBeNull();
         records.Should().HaveCount(2);
         // Most recently updated should be first
-        records![0].FileName.Should().Be("second.txt");
-        records[1].FileName.Should().Be("first.txt");
+        records![0].FileName.Should().Be(SecondFileName);
+        records[1].FileName.Should().Be(FirstFileName);
     }
 }

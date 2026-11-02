@@ -6,12 +6,20 @@ using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.DbModels;
 using ProjectDoomsdayServer.Domain.Models.Input;
+using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
 public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private const string IntegrationTestFileName = "integration-test.txt";
+    private const string UpdatedFileName = "integration-test-updated.txt";
+    private const string EnvironmentMetadataKey = "environment";
+    private const string EnvironmentMetadataValue = "test";
+    private const string VersionMetadataKey = "version";
+    private const string VersionMetadataValue = "1.0";
+
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
@@ -25,86 +33,91 @@ public class FileCrudIntegrationTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task FullCrudFlow_CreateListGetUpdateDelete_Succeeds()
     {
-        // 1. Create file record -> get ID
+        // Arrange
         var record = new CreateFileInput
         {
-            FileName = "integration-test.txt",
-            ContentType = "text/plain",
+            FileName = IntegrationTestFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 1024,
         };
-        var createResponse = await _client.PostAsJsonAsync("/file", record);
+
+        // Act & Assert - create file record and get ID
+        var createResponse = await _client.PostAsJsonAsync(FileRoutes.Base, record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
         var createdRecord = createResult!.File;
         createdRecord.Id.Should().NotBeNullOrEmpty();
         createResult.UploadUrl.Should().NotBeNullOrWhiteSpace();
-        var fileId = createdRecord.Id;
+        var fileId = createdRecord.Id!;
 
-        // 2. List files -> verify file appears
-        var listResponse = await _client.GetAsync("/file");
+        // Act & Assert - list files and verify file appears
+        var listResponse = await _client.GetAsync(FileRoutes.List());
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var files = await listResponse.Content.ReadFromJsonAsync<List<File>>();
         files.Should().NotBeNull();
         files.Should().Contain(f => f.Id == fileId);
 
-        // 3. Get file by ID -> verify metadata
-        var getResponse = await _client.GetAsync($"/file/{fileId}");
+        // Act & Assert - get file by ID and verify metadata
+        var getResponse = await _client.GetAsync(FileRoutes.ById(fileId));
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetchedRecord = await getResponse.Content.ReadFromJsonAsync<File>();
         fetchedRecord.Should().NotBeNull();
-        fetchedRecord!.FileName.Should().Be("integration-test.txt");
-        fetchedRecord.ContentType.Should().Be("text/plain");
+        fetchedRecord!.FileName.Should().Be(IntegrationTestFileName);
+        fetchedRecord.ContentType.Should().Be(TestConstants.PlainTextContentType);
 
-        // 4. Update via PUT -> verify change
+        // Act & Assert - update via PUT and verify change
         var updatedRecord = new File
         {
-            FileName = "integration-test-updated.txt",
-            ContentType = "text/plain",
+            FileName = UpdatedFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 2048,
-            Metadata = { ["environment"] = "test", ["version"] = "1.0" },
+            Metadata =
+            {
+                [EnvironmentMetadataKey] = EnvironmentMetadataValue,
+                [VersionMetadataKey] = VersionMetadataValue,
+            },
         };
-        var updateResponse = await _client.PutAsJsonAsync($"/file/{fileId}", updatedRecord);
+        var updateResponse = await _client.PutAsJsonAsync(FileRoutes.ById(fileId), updatedRecord);
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Verify update was applied
-        var getAfterUpdateResponse = await _client.GetAsync($"/file/{fileId}");
+        var getAfterUpdateResponse = await _client.GetAsync(FileRoutes.ById(fileId));
         var afterUpdate = await getAfterUpdateResponse.Content.ReadFromJsonAsync<File>();
         afterUpdate.Should().NotBeNull();
-        afterUpdate!.FileName.Should().Be("integration-test-updated.txt");
+        afterUpdate!.FileName.Should().Be(UpdatedFileName);
         afterUpdate.SizeBytes.Should().Be(2048);
-        afterUpdate.Metadata.Should().ContainKey("environment");
-        afterUpdate.Metadata["environment"].Should().Be("test");
-        afterUpdate.Metadata["version"].Should().Be("1.0");
+        afterUpdate.Metadata.Should().ContainKey(EnvironmentMetadataKey);
+        afterUpdate.Metadata[EnvironmentMetadataKey].Should().Be(EnvironmentMetadataValue);
+        afterUpdate.Metadata[VersionMetadataKey].Should().Be(VersionMetadataValue);
 
-        // 5. Delete file -> verify 204
-        var deleteResponse = await _client.DeleteAsync($"/file/{fileId}");
+        // Act & Assert - delete file and verify 204
+        var deleteResponse = await _client.DeleteAsync(FileRoutes.ById(fileId));
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        // 6. Get file by ID -> verify 404
-        var getAfterDeleteResponse = await _client.GetAsync($"/file/{fileId}");
+        // Act & Assert - get file by ID and verify 404
+        var getAfterDeleteResponse = await _client.GetAsync(FileRoutes.ById(fileId));
         getAfterDeleteResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task CreateThenDownload_Succeeds()
     {
-        // Arrange - Create file record (client would upload to S3 separately)
+        // Arrange - client would upload to S3 separately
         var record = new CreateFileInput
         {
             FileName = "binary-test.bin",
-            ContentType = "application/octet-stream",
+            ContentType = TestConstants.OctetStreamContentType,
             SizeBytes = 1024,
         };
 
-        // Act - Create file record
-        var createResponse = await _client.PostAsJsonAsync("/file", record);
+        // Act - create file record
+        var createResponse = await _client.PostAsJsonAsync(FileRoutes.Base, record);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateFileResult>();
         createResult.Should().NotBeNull();
+        var downloadResponse = await _client.GetAsync(FileRoutes.Content(createResult!.File.Id!));
 
-        // Download file (content comes from mocked storage)
-        var downloadResponse = await _client.GetAsync($"/file/{createResult!.File.Id}/content");
+        // Assert - content comes from mocked storage
         downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

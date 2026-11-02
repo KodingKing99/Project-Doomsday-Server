@@ -6,6 +6,11 @@ namespace ProjectDoomsdayServer.UnitTests;
 /// <summary>Hand-built Textract response modelled on the McDonald's receipt capture.</summary>
 public static class McDonaldsReceiptResponse
 {
+    private const string VendorNameFieldType = "VENDOR_NAME";
+    private const string TotalAmountText = "11.52";
+    private const string CompanyName = "McDonald's Corporation";
+    private const string SingleQuantity = "1";
+
     public static AnalyzeExpenseResponse Create() =>
         new() { ExpenseDocuments = [CreateDocument(1)] };
 
@@ -15,7 +20,7 @@ public static class McDonaldsReceiptResponse
             ExpenseIndex = expenseIndex,
             Blocks =
             [
-                Line("McDonald's Corporation"),
+                Line(CompanyName),
                 Line("Thank you for eating at McDonald's"),
                 new Block { BlockType = BlockType.WORD, Text = "ignored" },
             ],
@@ -27,10 +32,10 @@ public static class McDonaldsReceiptResponse
                     LineItemGroupIndex = 1,
                     LineItems =
                     [
-                        LineItem("BIG BREAKFAST", "1", "2.99"),
-                        LineItem("HOTCAKES", "1", "2.29"),
-                        LineItem("2 EGG MCMUFFIN", "1", "3.00"),
-                        LineItem("SAU EGG CH MCGRIDDLE", "1", "2.49"),
+                        LineItem("BIG BREAKFAST", SingleQuantity, "2.99"),
+                        LineItem("HOTCAKES", SingleQuantity, "2.29"),
+                        LineItem("2 EGG MCMUFFIN", SingleQuantity, "3.00"),
+                        LineItem("SAU EGG CH MCGRIDDLE", SingleQuantity, "2.49"),
                     ],
                 },
             ],
@@ -40,15 +45,15 @@ public static class McDonaldsReceiptResponse
     {
         var fields = new List<ExpenseField>
         {
-            Field("VENDOR_NAME", "McDonald's", 99.99f),
-            Field("VENDOR_NAME", "McDonald's Corporation", 99.97f),
+            Field(VendorNameFieldType, "McDonald's", 99.99f),
+            Field(VendorNameFieldType, CompanyName, 99.97f),
             Field("VENDOR_PHONE", "(856)327-0606", 99f, "TEL#"),
             Field("INVOICE_RECEIPT_ID", "KB34463365001", 99f, "MER#"),
             Field("INVOICE_RECEIPT_DATE", "Jun.22'08(Sun)08:", 79.14f),
             Field("SUBTOTAL", "10.77", 99.99f, "SUB TOTAL"),
             Field("TAX", "0.75", 99.9f, "TAKE OUT TAX"),
-            Field("TOTAL", "11.52", 99.99f),
-            Field("AMOUNT_PAID", "11.52", 99.9f, "TRANSACTION AMOUNT"),
+            Field("TOTAL", TotalAmountText, 99.99f),
+            Field("AMOUNT_PAID", TotalAmountText, 99.9f, "TRANSACTION AMOUNT"),
             Field("OTHER", "6038", 99f, "STORE#"),
         };
         return fields;

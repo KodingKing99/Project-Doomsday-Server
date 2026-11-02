@@ -5,12 +5,16 @@ using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.DbModels;
+using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
 public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private const string PdfContentType = "application/pdf";
+    private const string ReportFileName = "report.pdf";
+
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
@@ -22,8 +26,8 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     private async Task<File> CreateTestFile(
-        string fileName = "test.txt",
-        string contentType = "text/plain",
+        string fileName = TestConstants.DefaultTestFileName,
+        string contentType = TestConstants.PlainTextContentType,
         long sizeBytes = 100
     )
     {
@@ -33,7 +37,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
             ContentType = contentType,
             SizeBytes = sizeBytes,
         };
-        var response = await _client.PostAsJsonAsync("/file", record);
+        var response = await _client.PostAsJsonAsync(FileRoutes.Base, record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -46,7 +50,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         var record = await CreateTestFile();
 
         // Act
-        var response = await _client.GetAsync($"/file/{record.Id}/content");
+        var response = await _client.GetAsync(FileRoutes.Content(record.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -56,30 +60,30 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Download_ExistingFile_HasCorrectContentType()
     {
         // Arrange
-        var record = await CreateTestFile("document.pdf", "application/pdf");
+        var record = await CreateTestFile("document.pdf", PdfContentType);
 
         // Act
-        var response = await _client.GetAsync($"/file/{record.Id}/content");
+        var response = await _client.GetAsync(FileRoutes.Content(record.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+        response.Content.Headers.ContentType?.MediaType.Should().Be(PdfContentType);
     }
 
     [Fact]
     public async Task Download_ExistingFile_HasCorrectFileName()
     {
         // Arrange
-        var record = await CreateTestFile("report.pdf", "application/pdf");
+        var record = await CreateTestFile(ReportFileName, PdfContentType);
 
         // Act
-        var response = await _client.GetAsync($"/file/{record.Id}/content");
+        var response = await _client.GetAsync(FileRoutes.Content(record.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var contentDisposition = response.Content.Headers.ContentDisposition;
         contentDisposition.Should().NotBeNull();
-        contentDisposition!.FileName.Should().Contain("report.pdf");
+        contentDisposition!.FileName.Should().Contain(ReportFileName);
     }
 
     [Fact]
@@ -89,7 +93,7 @@ public class FileDownloadTests : IClassFixture<CustomWebApplicationFactory>
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
-        var response = await _client.GetAsync($"/file/{randomId}/content");
+        var response = await _client.GetAsync(FileRoutes.Content(randomId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

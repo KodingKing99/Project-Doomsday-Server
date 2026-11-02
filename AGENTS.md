@@ -64,3 +64,9 @@ dotnet test --verbosity normal 2>&1
 - `src/ProjectDoomsdayServer.ApiTests` - Mocked integration tests using xUnit, FluentAssertions, NSubstitute
 - `src/ProjectDoomsdayServer.E2ETests` - Full-stack E2E tests using Testcontainers (MongoDB + MinIO)
 
+## Test Patterns
+
+**Test conventions (ApiTests, E2ETests, UnitTests):**
+- **AAA comments**: every `[Fact]`/`[Theory]` has `// Arrange`, `// Act`, `// Assert` in that order. Use `// Act & Assert` when they are combined (a throw assertion, or a multi-step flow asserted at each step). Omit `// Arrange` when there is nothing to arrange. An optional suffix is allowed (`// Arrange - create 5 files`). Do not use free-form or numbered step comments.
+- **No magic strings**: a string literal used 2+ times in a test class becomes a `private const` in that class. A value shared across test classes in one project goes in that project's `TestConstants` static class (`ApiTests/TestSupport/TestConstants.cs`, `E2ETests/Infrastructure/TestConstants.cs`). Exceptions: `""`, test display names, and assertion-message text. Repeated magic numbers (sizes, etc.) get consts too.
+- **API URLs**: never write route literals in tests. Use the `FileRoutes` static class in `ProjectDoomsdayServer.TestSupport` (`Base`, `ById`, `Content`, `ExtractExpenseInfo`, `ExportCsv`, `List`). Literal ids such as `"not-a-valid-id"` are consts passed into `FileRoutes`.

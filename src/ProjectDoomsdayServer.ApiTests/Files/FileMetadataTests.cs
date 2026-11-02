@@ -5,12 +5,20 @@ using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.DbModels;
+using ProjectDoomsdayServer.TestSupport;
 using File = ProjectDoomsdayServer.Domain.DbModels.File;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
 public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private const string InvalidFileId = "not-a-valid-id";
+    private const string UpdatedFileName = "updated.txt";
+    private const string FirstMetadataKey = "key1";
+    private const string FirstMetadataValue = "value1";
+    private const string SecondMetadataKey = "key2";
+    private const string SecondMetadataValue = "value2";
+
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
@@ -25,11 +33,11 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     {
         record ??= new File
         {
-            FileName = "test.txt",
-            ContentType = "text/plain",
+            FileName = TestConstants.DefaultTestFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 100,
         };
-        var response = await _client.PostAsJsonAsync("/file", record);
+        var response = await _client.PostAsJsonAsync(FileRoutes.Base, record);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateFileResult>();
         return result!.File;
@@ -41,13 +49,13 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var record = new File
         {
-            FileName = "test.txt",
-            ContentType = "text/plain",
+            FileName = TestConstants.DefaultTestFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 1024,
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/file", record);
+        var response = await _client.PostAsJsonAsync(FileRoutes.Base, record);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -55,8 +63,8 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         createResult.Should().NotBeNull();
         var result = createResult!.File;
         result.Id.Should().NotBeNullOrEmpty();
-        result.FileName.Should().Be("test.txt");
-        result.ContentType.Should().Be("text/plain");
+        result.FileName.Should().Be(TestConstants.DefaultTestFileName);
+        result.ContentType.Should().Be(TestConstants.PlainTextContentType);
         result.SizeBytes.Should().Be(1024);
         createResult.UploadUrl.Should().NotBeNullOrWhiteSpace();
         response.Headers.Location.Should().NotBeNull();
@@ -69,20 +77,20 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var original = await CreateTestFile();
         var updated = new File
         {
-            FileName = "updated.txt",
-            ContentType = "text/plain",
+            FileName = UpdatedFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 2048,
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/file/{original.Id}", updated);
+        var response = await _client.PutAsJsonAsync(FileRoutes.ById(original.Id!), updated);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<File>();
         result.Should().NotBeNull();
         result!.Id.Should().Be(original.Id);
-        result.FileName.Should().Be("updated.txt");
+        result.FileName.Should().Be(UpdatedFileName);
         result.SizeBytes.Should().Be(2048);
     }
 
@@ -92,23 +100,27 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var record = new File
         {
-            FileName = "test.txt",
-            ContentType = "text/plain",
+            FileName = TestConstants.DefaultTestFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 100,
-            Metadata = { ["key1"] = "value1", ["key2"] = "value2" },
+            Metadata =
+            {
+                [FirstMetadataKey] = FirstMetadataValue,
+                [SecondMetadataKey] = SecondMetadataValue,
+            },
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/file", record);
+        var response = await _client.PostAsJsonAsync(FileRoutes.Base, record);
         var createResult = await response.Content.ReadFromJsonAsync<CreateFileResult>();
 
         // Assert
         createResult.Should().NotBeNull();
         var result = createResult!.File;
-        result.Metadata.Should().ContainKey("key1");
-        result.Metadata["key1"].Should().Be("value1");
-        result.Metadata.Should().ContainKey("key2");
-        result.Metadata["key2"].Should().Be("value2");
+        result.Metadata.Should().ContainKey(FirstMetadataKey);
+        result.Metadata[FirstMetadataKey].Should().Be(FirstMetadataValue);
+        result.Metadata.Should().ContainKey(SecondMetadataKey);
+        result.Metadata[SecondMetadataKey].Should().Be(SecondMetadataValue);
     }
 
     [Fact]
@@ -121,13 +133,13 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
 
         var updated = new File
         {
-            FileName = "updated.txt",
-            ContentType = "text/plain",
+            FileName = UpdatedFileName,
+            ContentType = TestConstants.PlainTextContentType,
             SizeBytes = 100,
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/file/{original.Id}", updated);
+        var response = await _client.PutAsJsonAsync(FileRoutes.ById(original.Id!), updated);
         var result = await response.Content.ReadFromJsonAsync<File>();
 
         // Assert
@@ -142,7 +154,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        var response = await _client.GetAsync($"/file/{created.Id}");
+        var response = await _client.GetAsync(FileRoutes.ById(created.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -159,7 +171,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var randomId = Guid.NewGuid().ToString("N");
 
         // Act
-        var response = await _client.GetAsync($"/file/{randomId}");
+        var response = await _client.GetAsync(FileRoutes.ById(randomId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -169,9 +181,9 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetById_InvalidId_Returns404()
     {
         // Act
-        var response = await _client.GetAsync("/file/not-a-valid-id");
+        var response = await _client.GetAsync(FileRoutes.ById(InvalidFileId));
 
-        // Assert - Returns 404 because no file exists with that ID
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -183,7 +195,7 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
             new File
             {
                 FileName = "file1.txt",
-                ContentType = "text/plain",
+                ContentType = TestConstants.PlainTextContentType,
                 SizeBytes = 100,
             }
         );
@@ -191,13 +203,13 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
             new File
             {
                 FileName = "file2.txt",
-                ContentType = "text/plain",
+                ContentType = TestConstants.PlainTextContentType,
                 SizeBytes = 200,
             }
         );
 
         // Act
-        var response = await _client.GetAsync("/file");
+        var response = await _client.GetAsync(FileRoutes.List());
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -213,13 +225,13 @@ public class FileMetadataTests : IClassFixture<CustomWebApplicationFactory>
         var created = await CreateTestFile();
 
         // Act
-        var response = await _client.DeleteAsync($"/file/{created.Id}");
+        var response = await _client.DeleteAsync(FileRoutes.ById(created.Id!));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        // Verify it's gone
-        var getResponse = await _client.GetAsync($"/file/{created.Id}");
+        // Act & Assert - verify it's gone
+        var getResponse = await _client.GetAsync(FileRoutes.ById(created.Id!));
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

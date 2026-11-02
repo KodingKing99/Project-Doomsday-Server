@@ -6,6 +6,7 @@ using ProjectDoomsdayServer.ApiTests.TestSupport;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Domain.Models.Input;
 using ProjectDoomsdayServer.Domain.Models.TextExtraction;
+using ProjectDoomsdayServer.TestSupport;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
@@ -14,6 +15,10 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
     private const string Header =
         "Vendor.Name,Vendor.Address,Vendor.Phone,ReceiptId,ReceiptDate,Subtotal,Tax,Total,AmountPaid,"
         + "LineItem.Item,LineItem.Quantity,LineItem.Price,LineItem.UnitPrice,LineItem.ProductCode,LineItem.ExpenseRow";
+
+    private const string CsvLineBreak = "\r\n";
+
+    private const string NonExistentFileId = "does-not-exist";
 
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
@@ -28,11 +33,11 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<string> CreateFileAsync(ExtractionInfo? extractionInfo)
     {
         var response = await _client.PostAsJsonAsync(
-            "/file",
+            FileRoutes.Base,
             new CreateFileInput
             {
-                FileName = "receipt.jpg",
-                ContentType = "image/jpeg",
+                FileName = TestConstants.ReceiptFileName,
+                ContentType = TestConstants.ImageJpegContentType,
                 SizeBytes = 10,
             }
         );
@@ -55,6 +60,7 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task ExportToCsv_WithLineItems_ReturnsOneRowPerLineItem()
     {
+        // Arrange
         var fileId = await CreateFileAsync(
             new ExtractionInfo
             {
@@ -81,8 +87,10 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
             }
         );
 
-        var response = await _client.GetAsync($"/file/{fileId}/export/csv");
+        // Act
+        var response = await _client.GetAsync(FileRoutes.ExportCsv(fileId));
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("text/csv");
         var body = await response.Content.ReadAsStringAsync();
@@ -91,43 +99,54 @@ public class FileCsvExportTests : IClassFixture<CustomWebApplicationFactory>
         body.Should()
             .Be(
                 Header
-                    + "\r\n"
+                    + CsvLineBreak
                     + vendorCells
-                    + "Burger,2,8.25,,N/A,N/A\r\n"
+                    + "Burger,2,8.25,,N/A,N/A"
+                    + CsvLineBreak
                     + vendorCells
-                    + "Fries,,,,N/A,N/A\r\n"
+                    + "Fries,,,,N/A,N/A"
+                    + CsvLineBreak
             );
     }
 
     [Fact]
     public async Task ExportToCsv_ExpenseWithoutLineItems_ReturnsSingleRow()
     {
+        // Arrange
         var fileId = await CreateFileAsync(
             new ExtractionInfo { Expenses = [new Expense { VendorName = Field("Shop") }] }
         );
 
-        var response = await _client.GetAsync($"/file/{fileId}/export/csv");
+        // Act
+        var response = await _client.GetAsync(FileRoutes.ExportCsv(fileId));
 
+        // Assert
         var body = await response.Content.ReadAsStringAsync();
-        body.Should().Be(Header + "\r\n" + "Shop,N/A,N/A,N/A,,,,,,N/A,,,,N/A,N/A\r\n");
+        body.Should()
+            .Be(Header + CsvLineBreak + "Shop,N/A,N/A,N/A,,,,,,N/A,,,,N/A,N/A" + CsvLineBreak);
     }
 
     [Fact]
     public async Task ExportToCsv_WithoutExtraction_ReturnsHeaderOnly()
     {
+        // Arrange
         var fileId = await CreateFileAsync(null);
 
-        var response = await _client.GetAsync($"/file/{fileId}/export/csv");
+        // Act
+        var response = await _client.GetAsync(FileRoutes.ExportCsv(fileId));
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await response.Content.ReadAsStringAsync()).Should().Be(Header + "\r\n");
+        (await response.Content.ReadAsStringAsync()).Should().Be(Header + CsvLineBreak);
     }
 
     [Fact]
     public async Task ExportToCsv_UnknownFile_ReturnsNotFound()
     {
-        var response = await _client.GetAsync("/file/does-not-exist/export/csv");
+        // Act
+        var response = await _client.GetAsync(FileRoutes.ExportCsv(NonExistentFileId));
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

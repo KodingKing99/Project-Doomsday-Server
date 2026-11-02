@@ -15,6 +15,11 @@ namespace ProjectDoomsdayServer.E2ETests.Files;
 [Collection(E2ETestCollectionDefinition.CollectionName)]
 public sealed class FileExtractionE2ETests : IAsyncLifetime
 {
+    private const string ImageJpegContentType = "image/jpeg";
+    private const string MongoIdField = "_id";
+    private const string ExtractionInfoField = "ExtractionInfo";
+    private const string ExpensesField = "Expenses";
+
     private readonly E2EInfrastructureFixture _infra;
     private E2EWebApplicationFactory _factory = default!;
 
@@ -31,11 +36,11 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     private static async Task<string> CreateUploadedFileAsync(HttpClient client)
     {
         var response = await client.PostAsJsonAsync(
-            "/file",
+            FileRoutes.Base,
             new CreateFileInput
             {
-                FileName = "receipt.jpg",
-                ContentType = "image/jpeg",
+                FileName = TestConstants.ReceiptFileName,
+                ContentType = ImageJpegContentType,
                 SizeBytes = 5,
             }
         );
@@ -53,18 +58,21 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     private IMongoCollection<BsonDocument> RawCollection() =>
         new MongoClient(_infra.MongoConnectionString)
             .GetDatabase(_infra.DatabaseName)
-            .GetCollection<BsonDocument>("files");
+            .GetCollection<BsonDocument>(TestConstants.FilesCollectionName);
 
     [Fact]
     public async Task Extract_ThenGet_RoundTripsFullSubdocumentIncludingGeometry()
     {
+        // Arrange
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
         var fileId = await CreateUploadedFileAsync(client);
 
-        var extract = await client.PostAsync($"/file/{fileId}/extractExpenseInfo", null);
+        // Act
+        var extract = await client.PostAsync(FileRoutes.ExtractExpenseInfo(fileId), null);
         var extracted = await extract.Content.ReadFromJsonAsync<ExtractionInfo>();
-        var fetched = await client.GetFromJsonAsync<File>($"/file/{fileId}");
+        var fetched = await client.GetFromJsonAsync<File>(FileRoutes.ById(fileId));
 
+        // Assert
         extract.StatusCode.Should().Be(HttpStatusCode.OK);
         fetched!.ExtractionInfo.Should().BeEquivalentTo(extracted);
         fetched.ExtractionInfo!.Expenses.Single().Total!.Geometry!.Polygon.Should().HaveCount(4);
@@ -73,13 +81,18 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     [Fact]
     public async Task Extract_StoresAmountsAsDecimal128()
     {
+        // Arrange
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
         var fileId = await CreateUploadedFileAsync(client);
 
-        await client.PostAsync($"/file/{fileId}/extractExpenseInfo", null);
+        // Act
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(fileId), null);
 
-        var document = await RawCollection().Find(new BsonDocument("_id", fileId)).SingleAsync();
-        var amount = document["ExtractionInfo"]["Expenses"][0]["Total"]["Amount"];
+        // Assert
+        var document = await RawCollection()
+            .Find(new BsonDocument(MongoIdField, fileId))
+            .SingleAsync();
+        var amount = document[ExtractionInfoField][ExpensesField][0]["Total"]["Amount"];
         amount.BsonType.Should().Be(BsonType.Decimal128);
         amount.AsDecimal.Should().Be(11.52m);
     }
@@ -87,15 +100,20 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     [Fact]
     public async Task Extract_SecondCallFromNewFactory_ServesPersistedResult()
     {
+        // Arrange
         var userId = E2ETestHelpers.UniqueUserId();
         var fileId = await CreateUploadedFileAsync(_factory.CreateClientAs(userId));
-        await _factory.CreateClientAs(userId).PostAsync($"/file/{fileId}/extractExpenseInfo", null);
-
+        await _factory
+            .CreateClientAs(userId)
+            .PostAsync(FileRoutes.ExtractExpenseInfo(fileId), null);
         await using var restartedFactory = new E2EWebApplicationFactory(_infra);
+
+        // Act
         var response = await restartedFactory
             .CreateClientAs(userId)
-            .PostAsync($"/file/{fileId}/extractExpenseInfo", null);
+            .PostAsync(FileRoutes.ExtractExpenseInfo(fileId), null);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         restartedFactory.ExtractionService.CallCount.Should().Be(0);
     }
@@ -103,22 +121,27 @@ public sealed class FileExtractionE2ETests : IAsyncLifetime
     [Fact]
     public async Task Put_AfterExtract_PreservesSubdocumentInMongo()
     {
+        // Arrange
         var client = _factory.CreateClientAs(E2ETestHelpers.UniqueUserId());
         var fileId = await CreateUploadedFileAsync(client);
-        await client.PostAsync($"/file/{fileId}/extractExpenseInfo", null);
+        await client.PostAsync(FileRoutes.ExtractExpenseInfo(fileId), null);
 
+        // Act
         var put = await client.PutAsJsonAsync(
-            $"/file/{fileId}",
+            FileRoutes.ById(fileId),
             new
             {
                 FileName = "renamed.jpg",
-                ContentType = "image/jpeg",
+                ContentType = ImageJpegContentType,
                 SizeBytes = 5,
             }
         );
 
+        // Assert
         put.StatusCode.Should().Be(HttpStatusCode.OK);
-        var document = await RawCollection().Find(new BsonDocument("_id", fileId)).SingleAsync();
-        document["ExtractionInfo"]["Expenses"].AsBsonArray.Should().HaveCount(1);
+        var document = await RawCollection()
+            .Find(new BsonDocument(MongoIdField, fileId))
+            .SingleAsync();
+        document[ExtractionInfoField][ExpensesField].AsBsonArray.Should().HaveCount(1);
     }
 }

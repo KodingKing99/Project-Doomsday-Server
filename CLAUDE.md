@@ -51,6 +51,11 @@ dotnet csharpier format .                              # Format code (CSharpier)
 
 Assertions use FluentAssertions (`response.StatusCode.Should().Be(HttpStatusCode.OK)`).
 
+**Test conventions (ApiTests, E2ETests, UnitTests):**
+- **AAA comments**: every `[Fact]`/`[Theory]` has `// Arrange`, `// Act`, `// Assert` in that order. Use `// Act & Assert` when they are combined (a throw assertion, or a multi-step flow asserted at each step). Omit `// Arrange` when there is nothing to arrange. An optional suffix is allowed (`// Arrange - create 5 files`). Do not use free-form or numbered step comments.
+- **No magic strings**: a string literal used 2+ times in a test class becomes a `private const` in that class. A value shared across test classes in one project goes in that project's `TestConstants` static class (`ApiTests/TestSupport/TestConstants.cs`, `E2ETests/Infrastructure/TestConstants.cs`). Exceptions: `""`, test display names, and assertion-message text. Repeated magic numbers (sizes, etc.) get consts too.
+- **API URLs**: never write route literals in tests. Use the `FileRoutes` static class in `ProjectDoomsdayServer.TestSupport` (`Base`, `ById`, `Content`, `ExtractExpenseInfo`, `ExportCsv`, `List`). Literal ids such as `"not-a-valid-id"` are consts passed into `FileRoutes`.
+
 **Test commands — use surgical output by default:**
 ```bash
 # Mocked tests only — start here (no Docker required)
@@ -78,6 +83,10 @@ Format → validate → commit. Stop and report if any step fails.
 3. **Diff**: `git diff HEAD` — read carefully before writing the message.
 4. **Commit**: `git add -u` then commit with conventional type prefix (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`), imperative subject ≤ 72 chars, body explaining *why*, co-author trailer `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`. Use heredoc to pass message.
 5. **Confirm**: `git status` and report commit hash to user.
+
+## Linting
+
+Roslyn analyzers are configured in `Directory.Build.props` and `.editorconfig`. Warnings are errors, so the build must have 0 warnings. Any disabled rule needs a reason comment in `.editorconfig`.
 
 ## Infrastructure (CDK)
 
