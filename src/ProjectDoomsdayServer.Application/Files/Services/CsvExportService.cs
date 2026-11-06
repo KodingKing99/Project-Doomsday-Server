@@ -11,7 +11,7 @@ public sealed class CsvExportService : ICsvExportService
     private const string TextFallback = "N/A";
     private const string CalendarDateFormat = "yyyy-MM-dd";
 
-    private static readonly string[] Columns =
+    private static readonly string[] _columns =
     [
         "Vendor.Name",
         "Vendor.Address",
@@ -51,8 +51,8 @@ public sealed class CsvExportService : ICsvExportService
             cancellationToken
         );
 
-        var csv = new StringBuilder();
-        AppendRow(csv, Columns);
+        var builder = new StringBuilder();
+        AppendRow(builder, _columns);
         // Expense csv for receipts
         foreach (var expense in file.ExtractionInfo?.Expenses ?? [])
         {
@@ -71,17 +71,17 @@ public sealed class CsvExportService : ICsvExportService
 
             if (expense.LineItems.Count == 0)
             {
-                AppendRow(csv, [.. expenseCells, .. LineItemCells(null)]);
+                AppendRow(builder, [.. expenseCells, .. LineItemCells(null)]);
                 continue;
             }
 
             foreach (var lineItem in expense.LineItems)
             {
-                AppendRow(csv, [.. expenseCells, .. LineItemCells(lineItem)]);
+                AppendRow(builder, [.. expenseCells, .. LineItemCells(lineItem)]);
             }
         }
 
-        return csv.ToString();
+        return builder.ToString();
     }
 
     private static string[] LineItemCells(LineItem? lineItem) =>
@@ -102,9 +102,9 @@ public sealed class CsvExportService : ICsvExportService
     private static string CreateDateCsvField(DateField? field) =>
         field?.Date?.ToString(CalendarDateFormat, CultureInfo.InvariantCulture) ?? string.Empty;
 
-    private static void AppendRow(StringBuilder csv, IEnumerable<string> cells)
+    private static void AppendRow(StringBuilder builder, IEnumerable<string> cells)
     {
-        csv.Append(string.Join(',', cells.Select(Escape))).Append("\r\n");
+        builder.AppendJoin(',', cells.Select(Escape)).Append("\r\n");
     }
 
     private static string Escape(string value) =>

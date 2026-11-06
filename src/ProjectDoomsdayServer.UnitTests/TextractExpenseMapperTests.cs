@@ -8,10 +8,12 @@ public class TextractExpenseMapperTests
 {
     private const string OtherFieldText = "x";
 
-    private static readonly DateTimeOffset ExtractedAt = new(2026, 9, 23, 17, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset _extractedAt = new(2026, 9, 23, 17, 0, 0, TimeSpan.Zero);
 
     private static Domain.Models.TextExtraction.Expense MapSingleExpense() =>
-        TextractExpenseMapper.Map(McDonaldsReceiptResponse.Create(), ExtractedAt).Expenses.Single();
+        TextractExpenseMapper
+            .Map(McDonaldsReceiptResponse.Create(), _extractedAt)
+            .Expenses.Single();
 
     [Fact]
     public void Map_SetsSourceAndTimestamp()
@@ -20,11 +22,11 @@ public class TextractExpenseMapperTests
         var response = McDonaldsReceiptResponse.Create();
 
         // Act
-        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+        var result = TextractExpenseMapper.Map(response, _extractedAt);
 
         // Assert
         result.Source.Should().Be("AwsTextract.AnalyzeExpense");
-        result.ExtractedAtUtc.Should().Be(ExtractedAt);
+        result.ExtractedAtUtc.Should().Be(_extractedAt);
     }
 
     [Fact]
@@ -88,7 +90,7 @@ public class TextractExpenseMapperTests
             );
 
         // Act
-        var lineItem = TextractExpenseMapper.Map(response, ExtractedAt).Expenses[0].LineItems[0];
+        var lineItem = TextractExpenseMapper.Map(response, _extractedAt).Expenses[0].LineItems[0];
 
         // Assert
         lineItem.OtherFields.Should().ContainSingle().Which.Text.Should().Be(OtherFieldText);
@@ -136,7 +138,7 @@ public class TextractExpenseMapperTests
         var response = McDonaldsReceiptResponse.Create();
 
         // Act
-        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+        var result = TextractExpenseMapper.Map(response, _extractedAt);
 
         // Assert
         result.RawText.Should().Be("McDonald's Corporation\nThank you for eating at McDonald's");
@@ -149,7 +151,7 @@ public class TextractExpenseMapperTests
         var response = new AnalyzeExpenseResponse();
 
         // Act
-        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+        var result = TextractExpenseMapper.Map(response, _extractedAt);
 
         // Assert
         result.Expenses.Should().BeEmpty();
@@ -170,7 +172,7 @@ public class TextractExpenseMapperTests
         };
 
         // Act
-        var result = TextractExpenseMapper.Map(response, ExtractedAt);
+        var result = TextractExpenseMapper.Map(response, _extractedAt);
 
         // Assert
         result.Expenses.Select(expense => expense.ExpenseIndex).Should().Equal(1, 2);

@@ -11,7 +11,7 @@ public static class TextractExpenseMapper
 {
     public const string SourceName = "AwsTextract.AnalyzeExpense";
 
-    private static readonly string[] DateFormats =
+    private static readonly string[] _dateFormats =
     [
         "yyyy-MM-dd",
         "M/d/yyyy",
@@ -63,7 +63,7 @@ public static class TextractExpenseMapper
             return null;
         return DateOnly.TryParseExact(
             text.Trim(),
-            DateFormats,
+            _dateFormats,
             CultureInfo.InvariantCulture,
             DateTimeStyles.None,
             out var date
