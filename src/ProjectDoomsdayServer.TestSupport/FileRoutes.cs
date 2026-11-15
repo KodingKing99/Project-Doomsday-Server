@@ -18,6 +18,8 @@ public static class FileRoutes
 
     public static string ExportCsv(string id) => $"{ById(id)}/export/csv";
 
+    public static string ExportExcel(string id) => $"{ById(id)}/export/excel";
+
     public static string List(int? skip = null, int? take = null)
     {
         var queryParts = new List<string>();

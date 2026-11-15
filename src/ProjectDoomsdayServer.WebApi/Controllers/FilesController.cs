@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Application.Files.Requests;
 using ProjectDoomsdayServer.Application.Files.Results;
 using ProjectDoomsdayServer.Application.Interfaces;
@@ -18,11 +18,17 @@ public sealed class FilesController : ControllerBase
     private readonly IFileService _fileService;
 
     private readonly IFileExportService _csvExportService;
+    private readonly IFileExportService _excelExportService;
 
-    public FilesController(IFileService fileService, IFileExportService csvExportService)
+    public FilesController(
+        IFileService fileService,
+        [FromKeyedServices(ExportFormats.Csv)] IFileExportService csvExportService,
+        [FromKeyedServices(ExportFormats.Excel)] IFileExportService excelExportService
+    )
     {
         _fileService = fileService;
         _csvExportService = csvExportService;
+        _excelExportService = excelExportService;
     }
 
     [HttpPost]
@@ -216,10 +222,34 @@ public sealed class FilesController : ControllerBase
         var userId = User.FindFirstValue("sub");
         if (userId is null)
             return BadRequest("User must be authenticated");
-        var csv = await _csvExportService.ExportFile(
+        var result = await _csvExportService.ExportFile(
             new ExportFileRequest { AuthenticatedUserId = userId, FileId = id },
             cancellationToken
         );
-        return File(Encoding.UTF8.GetBytes(csv), "text/csv", $"{id}.csv");
+        return File(result.Content, result.ContentType, result.FileName);
+    }
+
+    [HttpGet("{id}/export/excel")]
+    [Authorize]
+    [ProducesResponseType<FileContentResult>(
+        StatusCodes.Status200OK,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExportToExcel(
+        string id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var userId = User.FindFirstValue("sub");
+        if (userId is null)
+            return BadRequest("User must be authenticated");
+        var result = await _excelExportService.ExportFile(
+            new ExportFileRequest { AuthenticatedUserId = userId, FileId = id },
+            cancellationToken
+        );
+        return File(result.Content, result.ContentType, result.FileName);
     }
 }

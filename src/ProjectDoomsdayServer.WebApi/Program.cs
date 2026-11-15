@@ -4,6 +4,7 @@ using Amazon.Textract;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using ProjectDoomsdayServer.Application.Files;
 using ProjectDoomsdayServer.Application.Files.Services;
 using ProjectDoomsdayServer.Application.Interfaces;
 using ProjectDoomsdayServer.Application.Ports.Repositories;
@@ -23,7 +24,7 @@ builder.Services.AddSingleton<IFileRepository, MongoDbFileRepository>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IFileTextExtractionService, FileExtractionService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<IFileExportService, CsvExportService>();
+builder.Services.AddKeyedScoped<IFileExportService, CsvExportService>(ExportFormats.Csv);
 
 #region AWS
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
