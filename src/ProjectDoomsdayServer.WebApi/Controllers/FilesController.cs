@@ -12,14 +12,14 @@ using File = ProjectDoomsdayServer.Domain.DbModels.File;
 namespace ProjectDoomsdayServer.WebApi.Controllers;
 
 [ApiController]
-[Route("file")]
-public sealed class FileController : ControllerBase
+[Route("files")]
+public sealed class FilesController : ControllerBase
 {
     private readonly IFileService _fileService;
 
-    private readonly ICsvExportService _csvExportService;
+    private readonly IFileExportService _csvExportService;
 
-    public FileController(IFileService fileService, ICsvExportService csvExportService)
+    public FilesController(IFileService fileService, IFileExportService csvExportService)
     {
         _fileService = fileService;
         _csvExportService = csvExportService;
@@ -216,8 +216,8 @@ public sealed class FileController : ControllerBase
         var userId = User.FindFirstValue("sub");
         if (userId is null)
             return BadRequest("User must be authenticated");
-        var csv = await _csvExportService.ToCsv(
-            new ExportFileToCsvRequest { AuthenticatedUserId = userId, FileId = id },
+        var csv = await _csvExportService.ExportFile(
+            new ExportFileRequest { AuthenticatedUserId = userId, FileId = id },
             cancellationToken
         );
         return File(Encoding.UTF8.GetBytes(csv), "text/csv", $"{id}.csv");

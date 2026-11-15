@@ -3,7 +3,7 @@
 What the server stores on a **File** after running expense extraction (AWS Textract `AnalyzeExpense`). Vocabulary follows [CONTEXT.md](../CONTEXT.md); the storage decision is recorded in [ADR 0001](adr/0001-extracted-expense-info-is-a-server-owned-subdocument.md).
 
 - Lives at `File.ExtractionInfo` in the `files` Mongo collection (`null` until extraction has run).
-- **Server-owned.** Written only by `POST /file/{id}/extractExpenseInfo`; `PUT /file/{id}` never reads it from the request body.
+- **Server-owned.** Written only by `POST /files/{id}/extractExpenseInfo`; `PUT /files/{id}` never reads it from the request body.
 - **Not** stored in `File.Metadata` — that dictionary belongs to the client and is replaced on every PUT.
 
 ---
@@ -159,18 +159,18 @@ Source: `.context/mcdonalds_receipt_output_json.json` (raw Textract output, ~227
 
 | Situation | Result |
 |-----------|--------|
-| First `POST /file/{id}/extractExpenseInfo` | Calls Textract, stores `ExtractionInfo`, returns it (200). |
+| First `POST /files/{id}/extractExpenseInfo` | Calls Textract, stores `ExtractionInfo`, returns it (200). |
 | Called again | Returns the stored value without calling Textract. |
 | Called with `?force=true` | Calls Textract again and overwrites the stored value. |
 | Textract finds nothing (e.g. not a receipt) | Stored with `Expenses: []`; cached like any other result. |
 | Textract throws | Nothing is stored; error propagates to the client. |
 | File not found / not owned / no StorageKey | 404. |
-| `PUT /file/{id}` | Does not touch `ExtractionInfo` (see known limitations). |
-| `DELETE /file/{id}` | Removed with the File. |
+| `PUT /files/{id}` | Does not touch `ExtractionInfo` (see known limitations). |
+| `DELETE /files/{id}` | Removed with the File. |
 
 ## Known limitations (deferred)
 
 - **Lost-update race.** `IFileRepository.UpdateAsync` replaces the whole document. A PUT that loaded the File before an extraction finished will overwrite (erase) the new `ExtractionInfo`, and vice versa. Fix later with field-level `$set` updates.
 - **Cache assumes immutable file bytes.** The presigned upload URL can be reused until it expires; re-uploading different bytes to the same StorageKey leaves a stale extraction. Use `?force=true`.
-- **List payload size.** `GET /file` returns full `ExtractionInfo` including Geometry (~10–30 KB per receipt). A reduced list model (vendor, total, date) is planned.
+- **List payload size.** `GET /files` returns full `ExtractionInfo` including Geometry (~10–30 KB per receipt). A reduced list model (vendor, total, date) is planned.
 - **No embeddings yet.** `RawText` is stored ready for Atlas Vector Search / RAG; generating embeddings and the vector index are a later phase.

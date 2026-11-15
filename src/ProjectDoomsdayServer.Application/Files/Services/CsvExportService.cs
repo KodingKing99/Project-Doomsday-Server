@@ -6,7 +6,7 @@ using ProjectDoomsdayServer.Domain.Models.TextExtraction;
 
 namespace ProjectDoomsdayServer.Application.Files.Services;
 
-public sealed class CsvExportService : ICsvExportService
+public sealed class CsvExportService : IFileExportService
 {
     private const string TextFallback = "N/A";
     private const string CalendarDateFormat = "yyyy-MM-dd";
@@ -37,8 +37,8 @@ public sealed class CsvExportService : ICsvExportService
         _fileService = fileService;
     }
 
-    public async Task<string> ToCsv(
-        ExportFileToCsvRequest request,
+    public async Task<string> ExportFile(
+        ExportFileRequest request,
         CancellationToken cancellationToken
     )
     {

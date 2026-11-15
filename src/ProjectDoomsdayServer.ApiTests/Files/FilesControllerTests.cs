@@ -11,7 +11,7 @@ using Xunit;
 
 namespace ProjectDoomsdayServer.ApiTests.Files;
 
-public class FileControllerTests : IClassFixture<CustomWebApplicationFactory>
+public class FilesControllerTests : IClassFixture<CustomWebApplicationFactory>
 {
     private const string FirstUserId = "user123";
     private const string SecondUserId = "user456";
@@ -19,7 +19,7 @@ public class FileControllerTests : IClassFixture<CustomWebApplicationFactory>
     private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public FileControllerTests(CustomWebApplicationFactory factory)
+    public FilesControllerTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _factory.Reset();

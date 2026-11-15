@@ -5,7 +5,7 @@ namespace ProjectDoomsdayServer.TestSupport;
 /// </summary>
 public static class FileRoutes
 {
-    public const string Base = "/file";
+    public const string Base = "/files";
 
     public static string ById(string id) => $"{Base}/{id}";
 
